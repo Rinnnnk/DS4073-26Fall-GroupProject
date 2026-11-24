@@ -447,7 +447,7 @@ charts[[4]][[5]]
 
 :::
 
-<p class="nyc-note">The pair is marked at the `r round(dp$example_night_pct)`th percentile of the night-report gap. It is chosen to be representative of a large gap rather than the most extreme one: its rail-distance gap sits at the `r round(dp$example_station_pct)`th percentile, and both rents fall inside the ordinary range.</p>
+<p class="nyc-note">The marked pair sits where `r round(dp$example_night_pct)`% of pairs show a smaller night-report gap. It is chosen to be representative of a large gap rather than the most extreme one: its rail-distance gap is close to typical (`r round(dp$example_station_pct)`% of pairs are smaller), and both rents fall inside the ordinary range.</p>
 
 ### D3 · When in the day the two tracts differ
 

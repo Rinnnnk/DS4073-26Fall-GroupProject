@@ -1,0 +1,16 @@
+borough,law,N
+Manhattan,Misdemeanor,76748
+Brooklyn,Felony,50694
+Queens,Felony,41267
+Brooklyn,Violation,26742
+Manhattan,Felony,45159
+Bronx,Felony,43117
+Bronx,Misdemeanor,61515
+Queens,Misdemeanor,66261
+Staten Island,Misdemeanor,12995
+Brooklyn,Misdemeanor,81274
+Staten Island,Violation,4950
+Queens,Violation,19468
+Manhattan,Violation,17978
+Staten Island,Felony,6487
+Bronx,Violation,19446

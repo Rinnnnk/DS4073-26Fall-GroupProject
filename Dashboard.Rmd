@@ -1,0 +1,601 @@
+---
+title: "NYC Rental Trade-offs"
+output:
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: scroll
+    self_contained: true
+    mathjax: null
+    css: dashboard.css
+---
+
+```{r setup, include=FALSE}
+projection_data <- Sys.getenv("NYC_PROJ_DIR")
+if (nzchar(projection_data)) sf::sf_proj_search_paths(projection_data)
+source("scripts/analysis.R")
+source("scripts/widgets.R")
+source("module_A/visualizations.R")
+source("module_B/visualizations.R")
+source("module_C/visualizations.R")
+source("module_D/visualizations.R")
+source("module_E/visualizations.R")
+nyc <- load_analysis()
+charts <- list(housing_widgets(nyc), noise_widgets(nyc), safety_widgets(nyc),
+               tradeoff_widgets(nyc), profile_widgets(nyc))
+stopifnot(length(charts) == 5L, all(lengths(charts) == 6L))
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+qa_noise <- nyc$audit[source == "311 noise"]
+qa_nypd <- nyc$audit[source == "NYPD"]
+rent_mid <- median(nyc$tr$rent, na.rm = TRUE)
+num_profiles <- nrow(nyc$profile)
+ex <- nyc$examples
+quad_n <- nyc$profile[quad == quad_labels[4], .N]
+boro_rent <- nyc$tr[!is.na(rent), .(median_rent = median(as.numeric(rent))), by = borough][order(-median_rent)]
+peak_month <- nyc$time[borough == "All NYC", .(rate = sum(N)), by = month][
+  , rate := rate / tabulate(calendar$month)[month]][which.max(rate), month]
+```
+
+Housing {#housing data-orientation=rows}
+==========================================
+
+Row
+------------------------------------------
+
+### A1 · Median gross rent by census tract
+
+<p>Where is rent higher across the five boroughs?</p>
+
+<p><strong>`r show_n(nyc$tr[!is.na(rent), .N])` tracts with rent estimates</strong> in five boroughs. The median across those tract-level estimates is <strong>`r show_dollar(rent_mid)`</strong>.</p>
+
+::: {.nyc-viz}
+
+```{r chart-1-1}
+charts[[1]][[1]]
+```
+
+:::
+
+<p class="nyc-note">This is the median gross rent reported in the ACS 2020–2024 sample. Colors use fixed dollar bands. The published code 3501 means $3,500 or more.</p>
+
+### A1 · Rent and household income
+
+<p>Compare rents at similar household income levels.</p>
+
+::: {.nyc-viz}
+
+```{r chart-1-2}
+charts[[1]][[2]]
+```
+
+:::
+
+<p class="nyc-note">Each point is a tract. Legend clicks focus the view on a borough.</p>
+
+<details class="nyc-audit" id="nyc-data-coverage">
+<summary>Data coverage, time periods and matching</summary>
+<ul>
+<li>NYC's 2020 census boundaries give us `r show_n(nrow(nyc$tr))` tracts. We joined Census ACS estimates by tract GEOID. The 2020–2024 five-year estimates cover monthly gross rent paid by renters, household income, rent burden and resident population. `r show_n(nyc$tr[is.finite(rent), .N])` tracts have a rent estimate, `r show_n(nyc$tr[is.finite(rent) & is.finite(income), .N])` also have income, and `r show_n(nyc$tr[is_top_coded(rent), .N])` rent estimates are reported as $3,500+.</li>
+<li>We matched `r show_n(qa_noise$unique_tract)` of `r show_n(qa_noise$raw_rows)` 311 noise requests and `r show_n(qa_nypd$unique_tract)` of `r show_n(qa_nypd$raw_rows)` NYPD complaints to a single tract using incident coordinates. Both event extracts cover 2024. Citywide noise time charts also include requests without a tract match.</li>
+<li>We calculate rates per 1,000 residents for the `r show_n(nyc$tr[population >= 500, .N])` tracts with at least 500 ACS residents. Counts reflect reporting activity and can include incidents involving visitors and commuters. The combined rent/noise and profile sample retains `r show_n(num_profiles)` tracts with all five model inputs.</li>
+<li>Rail access uses straight-line distance from a tract representative point to the closest of `r show_n(nrow(nyc$stations))` complexes in the separate MTA station snapshot.</li>
+</ul>
+<p>Source links and reproduction steps are in the project README. The bundled join audit records how many events were lost at each matching step.</p>
+</details>
+
+Row
+------------------------------------------
+
+### A2 · Borough rent distributions
+
+<p>How widely do tract rents vary within each borough?</p>
+
+<p>Among tracts with rent estimates, `r boro_rent$borough[1]` has the highest borough median of tract rents (`r show_dollar(boro_rent$median_rent[1])`).</p>
+
+::: {.nyc-viz}
+
+```{r chart-1-3}
+charts[[1]][[3]]
+```
+
+:::
+
+<p class="nyc-note">The box shows the middle half of tract estimates. Each tract has equal weight.</p>
+
+### A2 · Tract coverage by rent threshold
+
+<p>At the same rent threshold, what share of each borough's tracts falls within budget?</p>
+
+::: {.nyc-viz}
+
+```{r chart-1-4}
+charts[[1]][[4]]
+```
+
+:::
+
+<p class="nyc-note">Hover over a dollar threshold to compare the boroughs. The denominator is every tract with a published rent estimate in that borough. Thresholds stop below $3,500, so top-coded rents stay above every plotted threshold.</p>
+
+Row
+------------------------------------------
+
+### A3 · Rent and renter burden
+
+<p>Are high-rent tracts also the most rent-burdened?</p>
+
+::: {.nyc-viz}
+
+```{r chart-1-5}
+charts[[1]][[5]]
+```
+
+:::
+
+<p class="nyc-note">Burden is the share of renter households paying at least 30% of income among those with a computable ratio. The comparison requires at least 50 such households.</p>
+
+### A3 · Where price rank and burden rank diverge
+
+<p>Inspect the largest gaps in both directions.</p>
+
+::: {.nyc-viz}
+
+```{r chart-1-6}
+charts[[1]][[6]]
+```
+
+:::
+
+<p class="nyc-note">Positive values mean the burden percentile is higher than the rent percentile. Both ranks use the same set of `r show_n(nrow(nyc$burden))` tracts. Source: <a href="https://www.census.gov/programs-surveys/acs/data/summary-file.2024.html">ACS 2020–2024</a>.</p>
+
+Noise {#noise data-orientation=rows}
+==========================================
+
+Row
+------------------------------------------
+
+### B1 · Noise request mix
+
+<p>What do residents report to 311 in each borough?</p>
+
+<p>The full 2024 dataset contains <strong>`r show_n(qa_noise$raw_rows)`</strong> noise requests.</p>
+
+::: {.nyc-viz}
+
+```{r chart-2-1}
+charts[[2]][[1]]
+```
+
+:::
+
+<p class="nyc-note">Each stack totals 100% of the requests assigned to that borough. Other noise pools categories outside the four named groups.</p>
+
+### B1 · Noise reporting rates
+
+<p>Compare how frequently each category was reported.</p>
+
+::: {.nyc-viz}
+
+```{r chart-2-2}
+charts[[2]][[2]]
+```
+
+:::
+
+<p class="nyc-note">The denominator is ACS resident population. Reporting rates also reflect how people use 311 and who is present in an area.</p>
+
+Row
+------------------------------------------
+
+### B2 · Day and hour of reporting
+
+<p>Explore the timing of 311 requests during the week.</p>
+
+<div class="nyc-controls"><label for="noise-type">Request type</label><select id="noise-type"><option>All types</option><option>Residential</option><option>Street/sidewalk</option><option>Commercial</option><option>Vehicle</option><option>Other noise</option></select></div>
+
+::: {.nyc-viz}
+
+```{r chart-2-3}
+charts[[2]][[3]]
+```
+
+:::
+
+<p class="nyc-note">Each tile divides requests by the number of occurrences of that weekday. Select a type or click a tile to compare its day on the right.</p>
+
+### B2 · Weekday and weekend profiles
+
+<p>Compare weekday and weekend averages by hour.</p>
+
+<div class="nyc-controls"><button type="button" id="noise-clear">Clear selected day</button><output id="noise-status" aria-live="polite">All noise types</output></div>
+
+::: {.nyc-viz}
+
+```{r chart-2-4}
+charts[[2]][[4]]
+```
+
+:::
+
+<p class="nyc-note">The selected day from the heatmap appears in clay. The two reference curves account for the different numbers of weekdays and weekend days.</p>
+
+Row
+------------------------------------------
+
+### B3 · Monthly reporting volume
+
+<p>How did the reporting volume change during 2024?</p>
+
+<p><strong>`r month.name[peak_month]`</strong> had the highest daily average across all noise types in 2024.</p>
+
+::: {.nyc-viz}
+
+```{r chart-2-5}
+charts[[2]][[5]]
+```
+
+:::
+
+<p class="nyc-note">Rates use the actual number of calendar days in each month. Select legend items to compare categories.</p>
+
+### B3 · Monthly late-night share
+
+<p>Did the share of late-night requests change too?</p>
+
+::: {.nyc-viz}
+
+```{r chart-2-6}
+charts[[2]][[6]]
+```
+
+:::
+
+<p class="nyc-note">Late night means 22:00–05:59 local time. The records measure reports people made to 311. Source: <a href="https://data.cityofnewyork.us/d/erm2-nwe9">NYC 311</a>.</p>
+
+Safety & Rail {#safety data-orientation=rows}
+==========================================
+
+Row
+------------------------------------------
+
+### C1 · Reported NYPD complaints
+
+<p>Where are reported complaint rates higher?</p>
+
+<p><strong>`r show_n(qa_nypd$unique_tract)` of `r show_n(qa_nypd$raw_rows)`</strong> 2024 reports matched one tract.</p>
+
+::: {.nyc-viz}
+
+```{r chart-3-1}
+charts[[3]][[1]]
+```
+
+:::
+
+<p class="nyc-note">The denominator is resident population. Spatial rates are shown for tracts with at least 500 residents.</p>
+
+### C1 · Offense-level mix
+
+<p>Compare the mix of reported offense levels by borough.</p>
+
+::: {.nyc-viz}
+
+```{r chart-3-2}
+charts[[3]][[2]]
+```
+
+:::
+
+<p class="nyc-note">Each stack shows the mix of geocoded reports matched to that borough. Source: <a href="https://data.cityofnewyork.us/d/qgea-i56i">NYPD historic complaint data</a>.</p>
+
+Row
+------------------------------------------
+
+### C2 · Distance to rail complexes
+
+<p>See how close tract representative points are to rail.</p>
+
+::: {.nyc-viz}
+
+```{r chart-3-3}
+charts[[3]][[3]]
+```
+
+:::
+
+<p class="nyc-note">Orange dots mark station complexes. Distances are straight lines from a point inside each tract to the nearest complex.</p>
+
+### C2 · Coverage at any distance
+
+<p>Read off the share of tracts within a distance you choose.</p>
+
+::: {.nyc-viz}
+
+```{r chart-3-4}
+charts[[3]][[4]]
+```
+
+:::
+
+<p class="nyc-note">The 0.8 km reference aids comparisons. The denominator is eligible tracts. Source: <a href="https://data.ny.gov/d/5f5g-n3cz">MTA station complexes</a>.</p>
+
+Row
+------------------------------------------
+
+### C3 · Rail access and report rates
+
+<p>Do areas near rail show different reporting rates?</p>
+
+::: {.nyc-viz}
+
+```{r chart-3-5}
+charts[[3]][[5]]
+```
+
+:::
+
+<p class="nyc-note">The vertical axis uses a log scale for skewed rates. Each point shows one tract. Compare patterns within boroughs.</p>
+
+### C3 · Within-borough distance bands
+
+<p>Compare median reporting rates at similar rail distances.</p>
+
+::: {.nyc-viz}
+
+```{r chart-3-6}
+charts[[3]][[6]]
+```
+
+:::
+
+<p class="nyc-note">Each point summarizes at least five tracts. Visitor and worker flows can influence the rate based on resident population.</p>
+
+Rent & Noise {#tradeoffs data-orientation=rows}
+==========================================
+
+Row
+------------------------------------------
+
+### D1 · Rent and night reporting quadrants
+
+<p>Do higher-rent tracts consistently have fewer night reports?</p>
+
+<p><strong>`r show_n(quad_n)` of `r show_n(num_profiles)`</strong> eligible tracts have both rent and night reporting at or above the respective medians.</p>
+
+::: {.nyc-viz}
+
+```{r chart-4-1}
+charts[[4]][[1]]
+```
+
+:::
+
+<p class="nyc-note">Lines mark medians across tracts with all profile fields available. Click a tract to locate it on the map.</p>
+
+```{r rent-sensitivity, results='asis'}
+s <- copy(nyc$tradeoff_check)
+s[, `:=`(tracts = show_n(tracts), correlation = sprintf("%.3f", correlation), high_high = show_pct(high_high))]
+setnames(s, c("Sample", "Tracts", "Spearman ρ", "At/above both medians"))
+htmltools::tags$details(class = "nyc-audit", id = "rent-sensitivity",
+  htmltools::tags$summary("Check $3,500+ rents and unusually high report rates"),
+  htmltools::tags$p("We recalculate the rank correlation between rent and night requests and the share at or above both sample medians. The reporting filter excludes a tract if either its night request rate or its NYPD complaint rate exceeds the original eligible sample's 99th percentile for that measure."),
+  htmltools::HTML(knitr::kable(s, format = "html")),
+  htmltools::tags$p("Use the association to describe tract-level patterns. Individual decisions and typical noise exposure require different measurements.")
+)
+```
+
+### D1 · Locate the four groups
+
+<p>Compare the geography of the same rent and reporting groups.</p>
+
+<div class="nyc-controls"><output id="d-selection" aria-live="polite">Select a tract to compare</output></div>
+
+::: {.nyc-viz}
+
+```{r chart-4-2}
+charts[[4]][[2]]
+```
+
+:::
+
+<p class="nyc-note">Click a colored tract or select a dot in the scatterplot. Gray identifies tracts outside the analysis sample.</p>
+
+Row
+------------------------------------------
+
+### D2 · High-rent tract profiles
+
+<p>Inspect how different the upper rent quartile can look.</p>
+
+::: {.nyc-viz}
+
+```{r chart-4-3}
+charts[[4]][[3]]
+```
+
+:::
+
+<p class="nyc-note">Drag on a vertical axis to brush a range. All five axes are favorable percentiles, including rent burden to compare affordability among high-rent tracts. Teal marks below-median night reports and clay marks at-or-above-median.</p>
+
+### D2 · Night reporting within high-rent tracts
+
+<p>Compare variability within each borough.</p>
+
+::: {.nyc-viz}
+
+```{r chart-4-4}
+charts[[4]][[4]]
+```
+
+:::
+
+<p class="nyc-note">The boxes summarize the upper-quarter rent sample and use a log scale with original units on the tick labels.</p>
+
+Row
+------------------------------------------
+
+### D3 · Same borough and similar rent
+
+<p>Compare a pair of high-rent tracts with different night-reporting rates.</p>
+
+<p><strong>`r ex$borough[1]`</strong> tracts. Median gross rent `r show_dollar(ex$rent[1])` and `r show_dollar(ex$rent[2])`.</p>
+
+::: {.nyc-viz}
+
+```{r chart-4-5}
+charts[[4]][[5]]
+```
+
+:::
+
+<p class="nyc-note">Pairs with uncensored rent estimates are eligible at a rent gap of up to $100 in the same borough. This illustrative pair is selected for the largest night-report gap between the upper and lower night-rate quartiles of the high-rent sample.</p>
+
+### D3 · When the two tracts differ
+
+<p>Compare the hourly report profile for those same tracts.</p>
+
+::: {.nyc-viz}
+
+```{r chart-4-6}
+charts[[4]][[6]]
+```
+
+:::
+
+<p class="nyc-note">Each point is an hour of the day aggregated over 2024. The comparison describes recorded requests at the tract level.</p>
+
+Profiles {#profiles data-orientation=rows}
+==========================================
+
+Row
+------------------------------------------
+
+### E1 · Tract groups in two dimensions
+
+<p>Explore four groups defined by K-means.</p>
+
+<p>The two axes explain <strong>`r sprintf("%.0f%%", 100 * sum(nyc$scores[1:2]))`</strong> of the standardized feature variance.</p>
+
+::: {.nyc-viz}
+
+```{r chart-5-1}
+charts[[5]][[1]]
+```
+
+:::
+
+<p class="nyc-note">PCA displays the two leading components of the five standardized inputs. Click a point to locate the tract.</p>
+
+### E1 · Map the four profiles
+
+<p>See where the model groups appear across the city.</p>
+
+<div class="nyc-controls"><output id="e-selection" aria-live="polite">Select a tract to compare</output></div>
+
+::: {.nyc-viz}
+
+```{r chart-5-2}
+charts[[5]][[2]]
+```
+
+:::
+
+<p class="nyc-note">The groups describe similarities in the five input features. Click a tract to highlight it in the projection.</p>
+
+Row
+------------------------------------------
+
+### E2 · Standardized group centers
+
+<p>Identify the features that distinguish each profile.</p>
+
+::: {.nyc-viz}
+
+```{r chart-5-3}
+charts[[5]][[3]]
+```
+
+:::
+
+<p class="nyc-note">Each cell shows the center of a group in standard deviations from the complete-case sample mean.</p>
+
+### E2 · How well do tracts fit their group?
+
+<p>Inspect the spread in silhouette values within each profile.</p>
+
+<p>Mean silhouette width is <strong>`r sprintf("%.2f", mean(nyc$profile$silhouette))`</strong> for the four-group model.</p>
+
+::: {.nyc-viz}
+
+```{r chart-5-4}
+charts[[5]][[4]]
+```
+
+:::
+
+<p class="nyc-note">Values near zero mark tracts between groups. The dashed line marks zero.</p>
+
+```{r group-sensitivity, results='asis'}
+model_check <- copy(nyc$model_check)
+model_check[, mean_width := sprintf("%.3f", mean_width)]
+setnames(model_check, c("Groups (K)", "Mean silhouette"))
+stability <- copy(nyc$stability_check)
+stability[, `:=`(tracts = show_n(tracts), agreement = sprintf("%.3f", agreement))]
+setnames(stability, c("Refit sample", "Tracts", "Adjusted Rand index"))
+htmltools::tags$details(class = "nyc-audit", id = "group-sensitivity",
+  htmltools::tags$summary("Model settings, separation and sensitivity"),
+  htmltools::tags$p("The page uses four groups for exploratory comparison. K-means standardizes rent (with the $3,500+ category represented at its published lower bound) and the log1p transforms of night requests, NYPD complaints, rail distance and density. Each fit uses seed 4073, 25 starts and up to 100 iterations. Population density supplies context for the profiles."),
+  htmltools::HTML(knitr::kable(model_check, format = "html")),
+  htmltools::tags$p("The observed silhouette widths indicate substantial overlap. We also re-standardize and refit the four-group model after the exclusions in Rent & Noise. The adjusted Rand index compares the baseline and refitted group assignments for the retained tracts. A value of 1 means the assignments agree, and 0 means chance-level agreement."),
+  htmltools::HTML(knitr::kable(stability, format = "html"))
+)
+```
+
+Row
+------------------------------------------
+
+### E3 · Rank with your priorities
+
+<p>Give more weight to the measures that matter in this comparison.</p>
+
+<div class="nyc-controls" id="e-presets"><button value="equal" type="button">Equal weights</button><button value="quiet" type="button">Quiet priority</button><button value="rail" type="button">Rail priority</button></div><div class="nyc-weights"><label for="w-cost">Lower rent <output id="v-cost">25%</output><input id="w-cost" type="range" min="0" max="100" value="25"></label><label for="w-quiet">Fewer night reports <output id="v-quiet">25%</output><input id="w-quiet" type="range" min="0" max="100" value="25"></label><label for="w-reports">Fewer NYPD reports <output id="v-reports">25%</output><input id="w-reports" type="range" min="0" max="100" value="25"></label><label for="w-rail">Closer rail <output id="v-rail">25%</output><input id="w-rail" type="range" min="0" max="100" value="25"></label></div>
+
+::: {.nyc-viz}
+
+```{r chart-5-5}
+charts[[5]][[5]]
+```
+
+:::
+
+<p class="nyc-note">Scores combine four favorable percentiles for rent, night requests, NYPD complaints and rail distance. The density measure used in the profiles has no fixed preference direction. Sliders are normalized to sum to 100%.</p>
+
+### E3 · Rank changes from equal weights
+
+<p>Track how the eight tracts in your current shortlist moved.</p>
+
+<div class="nyc-controls"><output id="e-rank-status" aria-live="polite"></output></div>
+
+::: {.nyc-viz}
+
+```{r chart-5-6}
+charts[[5]][[6]]
+```
+
+:::
+
+<p class="nyc-note">The left axis shows each tract’s rank under equal weights. The right axis shows its rank under the current priorities.</p>
+
+```{r interactivity, results='asis'}
+types <- c("All types", noise_types)
+hour_data <- setNames(lapply(types, function(x) {
+  t <- period_data(nyc, x)
+  list(rate = matrix(t$rate, nrow = 7L, byrow = TRUE),
+       counts = matrix(t$calls, nrow = 7L, byrow = TRUE))
+}), types)
+weights <- calendar[, .N, by = weekday][match(1:7, weekday), N]
+sensitivity <- nyc$profile[, .(GEOID, label, borough, cost, quiet, reports, rail, rent, night_rate, nypd_rate, station_m)]
+link_labels <- nyc$profile[, .(label, GEOID, quad, cluster)]
+payload <- jsonlite::toJSON(list(noise = hour_data, days = weights, profiles = sensitivity,
+                                 links = link_labels, colors = as.list(boro_colors)), auto_unbox = TRUE)
+cat("\n```{=html}\n<script type='application/json' id='nyc-payload'>", payload, "</script>\n<script>\n",
+    paste(readLines("scripts/dashboard.js", warn = FALSE), collapse = "\n"), "\n</script>\n```\n", sep = "")
+```

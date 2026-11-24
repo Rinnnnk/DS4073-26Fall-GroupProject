@@ -1,0 +1,45 @@
+:root {
+  --ink: #173743;
+  --soft-ink: #4b626a;
+  --paper: #fff;
+  --rule: #d9e4e1;
+  --accent: #246c65;
+}
+body { background: #edf3f0; color: var(--ink); font-family: 'Avenir Next', Arial, sans-serif; padding-top: 68px; }
+.navbar-inverse { background: #18393d; border-color: #18393d; }
+.navbar-inverse .navbar-brand { color: #fff; font-weight: 700; letter-spacing: -.02em; }
+.navbar-inverse .navbar-nav > li > a { color: #dfefea; }
+.navbar-inverse .navbar-nav > .active > a,
+.navbar-inverse .navbar-nav > .active > a:hover { background: #2b615b; color: #fff; }
+.chart-wrapper { border: 1px solid var(--rule); border-radius: 9px; background: var(--paper); }
+.chart-title { padding: 11px 15px; color: var(--ink); background: #f7faf8; font-size: 15px;
+  border-bottom-color: var(--rule); font-weight: 700; }
+.chart-wrapper .chart-stage { padding: 9px 14px 13px; }
+.chart-stage p { font-size: 13px; color: var(--soft-ink); margin: 6px 0 11px; }
+.chart-stage p strong { color: var(--accent); }
+.nyc-viz > .html-widget { min-width: 0; height: 344px !important; }
+.nyc-viz .leaflet-container { background: #e9f1ef; }
+.nyc-viz .leaflet-control { color: var(--ink); }
+.nyc-viz .legend { font-size: 11px; }
+.nyc-note { padding-top: 5px; line-height: 1.45; }
+.leaflet-tooltip.nyc-tooltip { white-space: normal; max-width: 244px; }
+.nyc-audit { margin: 6px 0 12px; padding: 8px 12px; background: #F4F8F7; border: 1px solid #DEE7E8; }
+.nyc-audit summary { cursor: pointer; font-weight: 600; }
+.nyc-audit > p, .nyc-audit > ul, .nyc-audit > table { margin: 8px 0; }
+.nyc-audit th, .nyc-audit td { padding: 4px 8px; border-bottom: 1px solid #DEE7E8; }
+.nyc-controls { display: flex; align-items: center; gap: 7px 12px; flex-wrap: wrap; margin: 3px 0 4px; font-size: 13px; }
+.nyc-controls label { margin: 0; }
+.nyc-controls select, .nyc-controls button { padding: 5px 8px; border: 1px solid #abcbc1;
+  border-radius: 5px; background: #fff; color: var(--ink); font: inherit; }
+.nyc-controls button:hover { background: #e8f3ef; }
+.nyc-controls output { padding: 0; display: inline; color: var(--accent); }
+.nyc-weights { display: grid; grid-template-columns: 1fr 1fr; gap: 7px 14px; margin: 8px 0 11px; font-size: 12px; }
+.nyc-weights label { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; justify-content: space-between; margin: 0; }
+.nyc-weights output { padding: 0; font-variant-numeric: tabular-nums; }
+.nyc-weights input { flex: 0 0 100%; width: 100%; accent-color: var(--accent); }
+.nyc-audit { color: var(--soft-ink); font-size: 12px; }
+.nyc-audit summary { cursor: pointer; color: var(--accent); font-weight: 650; }
+.nyc-key { display: flex; gap: 9px 18px; flex-wrap: wrap; font-size: 12px; color: var(--soft-ink); margin-top: 2px; }
+.nyc-key span { border-left: 10px solid var(--swatch); padding-left: 5px; }
+a { color: #196d6c; }
+@media (max-width: 767px) { .chart-wrapper .chart-stage { padding: 8px; } .nyc-viz > .html-widget { height: 310px !important; } }

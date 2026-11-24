@@ -23,6 +23,7 @@ nyc <- load_analysis()
 charts <- list(housing_widgets(nyc), noise_widgets(nyc), safety_widgets(nyc),
                tradeoff_widgets(nyc), profile_widgets(nyc))
 stopifnot(length(charts) == 5L, all(lengths(charts) == 6L))
+dp <- attr(charts[[4]], "summary")
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 qa_noise <- nyc$audit[source == "311 noise"]
 qa_nypd <- nyc$audit[source == "NYPD"]
@@ -351,6 +352,8 @@ charts[[3]][[6]]
 Rent & Noise {#tradeoffs data-orientation=rows}
 ==========================================
 
+<p class="nyc-note"><strong>Module D</strong> · [Your name] · [Student ID]</p>
+
 Row
 ------------------------------------------
 
@@ -401,9 +404,9 @@ charts[[4]][[2]]
 Row
 ------------------------------------------
 
-### D2 · High-rent tract profiles
+### D2 · How far apart can two similar-rent tracts be?
 
-<p>Inspect how different the upper rent quartile can look.</p>
+<p>Every pair of tracts inside one borough whose median gross rent differs by $100 or less, compared on three outcomes at once.</p>
 
 ::: {.nyc-viz}
 
@@ -413,11 +416,11 @@ charts[[4]][[3]]
 
 :::
 
-<p class="nyc-note">Drag on a vertical axis to brush a range. All five axes are favorable percentiles, including rent burden to compare affordability among high-rent tracts. Teal marks below-median night reports and clay marks at-or-above-median.</p>
+<p class="nyc-note">`r show_n(dp$n_pairs)` pairs across `r show_n(dp$tracts)` tracts. Half of the pairs differ by at most `r sprintf("%.1f", dp$night_median)` late-night requests per 1,000 residents, but the worst tenth differ by `r sprintf("%.1f", dp$night_p90)` or more. Top-coded rents, where ACS reports only "$3,500 or more", are excluded because the true gap is unknown.</p>
 
-### D2 · Night reporting within high-rent tracts
+### D2 · Does the rent window change the answer?
 
-<p>Compare variability within each borough.</p>
+<p>Repeat the comparison with a $50 and a $150 window.</p>
 
 ::: {.nyc-viz}
 
@@ -427,16 +430,14 @@ charts[[4]][[4]]
 
 :::
 
-<p class="nyc-note">The boxes summarize the upper-quarter rent sample and use a log scale with original units on the tick labels.</p>
+<p class="nyc-note">The three curves nearly coincide. The median night-report gap is `r sprintf("%.1f", dp$thresholds[threshold == 50, night_median])`, `r sprintf("%.1f", dp$thresholds[threshold == 100, night_median])` and `r sprintf("%.1f", dp$thresholds[threshold == 150, night_median])` at the three windows, and the 90th percentile moves from `r sprintf("%.1f", dp$thresholds[threshold == 50, night_p90])` to `r sprintf("%.1f", dp$thresholds[threshold == 150, night_p90])`. The rent window is not what drives the result.</p>
 
 Row
 ------------------------------------------
 
-### D3 · Same borough and similar rent
+### D3 · One pair, placed in the distribution
 
-<p>Compare a pair of high-rent tracts with different night-reporting rates.</p>
-
-<p><strong>`r ex$borough[1]`</strong> tracts. Median gross rent `r show_dollar(ex$rent[1])` and `r show_dollar(ex$rent[2])`.</p>
+<p><strong>`r dp$example$a_label`</strong> at `r show_rent(dp$example$a_rent)` and <strong>`r dp$example$b_label`</strong> at `r show_rent(dp$example$b_rent)`, both in `r dp$example$borough`.</p>
 
 ::: {.nyc-viz}
 
@@ -446,11 +447,11 @@ charts[[4]][[5]]
 
 :::
 
-<p class="nyc-note">Pairs with uncensored rent estimates are eligible at a rent gap of up to $100 in the same borough. This illustrative pair is selected for the largest night-report gap between the upper and lower night-rate quartiles of the high-rent sample.</p>
+<p class="nyc-note">The pair is marked at the `r round(dp$example_night_pct)`th percentile of the night-report gap. It is chosen to be representative of a large gap rather than the most extreme one: its rail-distance gap sits at the `r round(dp$example_station_pct)`th percentile, and both rents fall inside the ordinary range.</p>
 
-### D3 · When the two tracts differ
+### D3 · When in the day the two tracts differ
 
-<p>Compare the hourly report profile for those same tracts.</p>
+<p>The same two tracts, hour by hour.</p>
 
 ::: {.nyc-viz}
 
@@ -460,7 +461,7 @@ charts[[4]][[6]]
 
 :::
 
-<p class="nyc-note">Each point is an hour of the day aggregated over 2024. The comparison describes recorded requests at the tract level.</p>
+<p class="nyc-note">`r sprintf("%.0f", 100 * dp$night_share_of_gap)`% of the total hourly difference falls inside the 22:00-05:59 window used for the rate; the rest is concentrated in the late evening. Hourly counts are 311 requests recorded in 2024, not measured noise levels.</p>
 
 Profiles {#profiles data-orientation=rows}
 ==========================================

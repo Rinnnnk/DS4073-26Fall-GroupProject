@@ -22,7 +22,7 @@ source("module_E/visualizations.R")
 nyc <- load_analysis()
 charts <- list(housing_widgets(nyc), noise_widgets(nyc), safety_widgets(nyc),
                tradeoff_widgets(nyc), profile_widgets(nyc))
-stopifnot(length(charts) == 5L, all(lengths(charts) == 6L))
+stopifnot(length(charts) == 5L, identical(lengths(charts), c(6L, 6L, 8L, 6L, 6L)))
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 qa_noise <- nyc$audit[source == "311 noise"]
 qa_nypd <- nyc$audit[source == "NYPD"]
@@ -290,6 +290,22 @@ charts[[3]][[2]]
 
 <p class="nyc-note">Each 100% stack compares the share of felony, misdemeanor and violation reports among geocoded records matched to that borough. Legend clicks isolate a category; hover shows counts. Source: <a href="https://data.cityofnewyork.us/d/qgea-i56i">NYPD historic complaint data</a>.</p>
 
+### C1 · Within-borough rate variation
+
+<p>How much do tract reporting rates vary inside each borough?</p>
+
+::: {.nyc-viz}
+
+```{r chart-3-3}
+charts[[3]][[3]]
+```
+
+:::
+
+<p class="nyc-note">Each box shows the median and middle half of eligible tract rates; points mark outliers. The log1p vertical position keeps zero rates and high outliers visible, with tick labels in reports per 1,000 residents. Tracts have equal weight.</p>
+
+<p class="nyc-note"><strong>Readout:</strong> Manhattan's middle half spans 38.5–116.7 reports per 1,000, a wider range than Queens (29.0–60.4). Borough medians alone hide this spread.</p>
+
 Row
 ------------------------------------------
 
@@ -299,8 +315,8 @@ Row
 
 ::: {.nyc-viz}
 
-```{r chart-3-3}
-charts[[3]][[3]]
+```{r chart-3-4}
+charts[[3]][[4]]
 ```
 
 :::
@@ -313,8 +329,8 @@ charts[[3]][[3]]
 
 ::: {.nyc-viz}
 
-```{r chart-3-4}
-charts[[3]][[4]]
+```{r chart-3-5}
+charts[[3]][[5]]
 ```
 
 :::
@@ -322,6 +338,22 @@ charts[[3]][[4]]
 <p class="nyc-note">The step curves show the share of each borough's tracts within any chosen distance. The dashed 0.8 km reference makes borough coverage comparable. The denominator is all tracts with a measured distance in that borough. Source: <a href="https://data.ny.gov/d/5f5g-n3cz">MTA station complexes</a>.</p>
 
 <p class="nyc-note"><strong>Readout:</strong> Within 0.8 km are 93.9% of Manhattan tracts, 77.6% in Brooklyn, 72.6% in the Bronx, 42.4% in Queens and 23.0% on Staten Island.</p>
+
+### C2 · Farthest populated tracts
+
+<p>Which populated tracts have the longest straight-line distance to a station?</p>
+
+::: {.nyc-viz}
+
+```{r chart-3-6}
+charts[[3]][[6]]
+```
+
+:::
+
+<p class="nyc-note">The ten farthest tracts among those with at least 500 ACS residents are ranked by distance. Labels use borough abbreviations and tract codes; hover reveals the full tract label and closest station. This filter avoids letting nearly uninhabited tracts dominate the rental-oriented ranking.</p>
+
+<p class="nyc-note"><strong>Readout:</strong> The ten farthest populated tracts are all in Queens or Staten Island. The farthest, Staten Island tract 032300, is 8.45 km in a straight line from its nearest station complex.</p>
 
 Row
 ------------------------------------------
@@ -332,8 +364,8 @@ Row
 
 ::: {.nyc-viz}
 
-```{r chart-3-5}
-charts[[3]][[5]]
+```{r chart-3-7}
+charts[[3]][[7]]
 ```
 
 :::
@@ -346,8 +378,8 @@ charts[[3]][[5]]
 
 ::: {.nyc-viz}
 
-```{r chart-3-6}
-charts[[3]][[6]]
+```{r chart-3-8}
+charts[[3]][[8]]
 ```
 
 :::

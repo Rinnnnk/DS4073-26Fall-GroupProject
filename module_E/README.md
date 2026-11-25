@@ -1,11 +1,12 @@
-# E · 社区画像与偏好
+# Module E: Tract Profiles & Same-Budget Preference Switching
 
-现版三个任务的图表代码在 [visualizations.R](visualizations.R)，说明与布局在 [Dashboard.Rmd](../Dashboard.Rmd)。
+Author: **Weiye Xu (Student ID: 2430026242)**
 
-- E1 用 PCA 和地图查看四组 K-means 画像的空间和变量分布。
-- E2 比较标准化组中心，检查轮廓系数与分组对样本筛选的敏感性。
-- E3 调整租金、夜间举报、NYPD 报案和站距的权重，对比候选名单。
+Module E examines multi-dimensional census tract profiles (`2,178` joint-analysis tracts) and measures how candidate rental pools shift when renters change priorities on the same rent budget.
 
-## 可深化
+## Structure
+- **Row 1 (Task E1)**: Interactive `leaflet` cluster map with profile layer controls and MTA station overlay (`e-cluster-map`), 100% stacked borough profile composition (`e-boro-mix`), and PCA biplot with feature loading vectors (`e-pca`).
+- **Row 2 (Task E2)**: Standardized multi-indicator profile signature (`e-centers`), silhouette distribution with `0` and `0.10` blurry-zone thresholds (`e-fit`), and cross-profile blurry boundary pair diagnostic (`e-boundary`).
+- **Row 3 (Task E3)**: Same-budget preference switching (`<= $1,800`, `<= $2,000`, `<= $2,400`, or borough-median budget tier) comparing Retained, Newly Entering, and Exiting tracts (`e-turnover`) and borough/metric shifts (`e-boro-shift`).
+- **Row 4 (Explorer & Sandbox)**: Searchable `DT::datatable` candidate turnover table alongside the interactive 4-slider custom weight rank-shift sandbox (`e-ranking`, `e-rank-shifts`).
 
-四组平均轮廓系数约 0.23，存在组间重叠。可把固定预算作为下一步，再比较等权和不同偏好下的名单变动。

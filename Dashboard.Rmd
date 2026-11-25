@@ -22,7 +22,7 @@ source("module_E/visualizations.R")
 nyc <- load_analysis()
 charts <- list(housing_widgets(nyc), noise_widgets(nyc), safety_widgets(nyc),
                tradeoff_widgets(nyc), profile_widgets(nyc))
-stopifnot(length(charts) == 5L, identical(lengths(charts), c(6L, 6L, 8L, 6L, 6L)))
+stopifnot(length(charts) == 5L, identical(lengths(charts), c(6L, 6L, 8L, 6L, 10L)))
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 qa_noise <- nyc$audit[source == "311 noise"]
 qa_nypd <- nyc$audit[source == "NYPD"]
@@ -505,14 +505,23 @@ charts[[4]][[6]]
 Profiles {#profiles data-orientation=rows}
 ==========================================
 
+<p class="nyc-note"><strong>Analyst: Weiye Xu · Student ID: 2430026242</strong> — Multi-dimensional tract profiles and same-budget preference turnover across `r show_n(num_profiles)` NYC census tracts.</p>
+
+<div class="nyc-kpis">
+<div class="nyc-kpi"><div class="nyc-kpi-val">`r show_n(num_profiles)`</div><div class="nyc-kpi-lbl">Joint-Analysis Tracts (93.7% of NYC)</div></div>
+<div class="nyc-kpi"><div class="nyc-kpi-val">4 Profiles</div><div class="nyc-kpi-lbl">Mean Silhouette 0.23 (17.9% Blurry)</div></div>
+<div class="nyc-kpi"><div class="nyc-kpi-val">`r show_n(nyc$profile[rent <= 2000, .N])`</div><div class="nyc-kpi-lbl">Tracts Within $2,000 Benchmark Cap</div></div>
+<div class="nyc-kpi"><div class="nyc-kpi-val">37%-59%</div><div class="nyc-kpi-lbl">Top-100 Turnover Across Preferences</div></div>
+</div>
+
 Row
 ------------------------------------------
 
-### E1 · Tract groups in two dimensions
+### E1 · Spatial distribution of tract profiles
 
-<p>Explore four groups defined by K-means.</p>
+<p>Where do the four multi-indicator rental profiles appear across NYC?</p>
 
-<p>The two axes explain <strong>`r sprintf("%.0f%%", 100 * sum(nyc$scores[1:2]))`</strong> of the standardized feature variance.</p>
+<div class="nyc-controls"><output id="e-selection" aria-live="polite">Click a tract or PCA point to highlight</output></div>
 
 ::: {.nyc-viz}
 
@@ -522,13 +531,11 @@ charts[[5]][[1]]
 
 :::
 
-<p class="nyc-note">PCA displays the two leading components of the five standardized inputs. Click a point to locate the tract.</p>
+<p class="nyc-note">Use the top-right layer control to toggle individual profiles or overlay MTA station complexes. Click any tract for full metrics and PCA linkage.</p>
 
-### E1 · Map the four profiles
+### E1 · Borough profile composition
 
-<p>See where the model groups appear across the city.</p>
-
-<div class="nyc-controls"><output id="e-selection" aria-live="polite">Select a tract to compare</output></div>
+<p>How are the four profiles distributed across the five boroughs?</p>
 
 ::: {.nyc-viz}
 
@@ -538,14 +545,13 @@ charts[[5]][[2]]
 
 :::
 
-<p class="nyc-note">The groups describe similarities in the five input features. Click a tract to highlight it in the projection.</p>
+<p class="nyc-note"><strong>Readout:</strong> Profile 1 dominates the Bronx (70.8%), Profile 2 covers 89.6% of Staten Island, Profile 3 leads Brooklyn (41.1%), and Profile 4 concentrates in Manhattan (34.5%, with 0% Profile 2).</p>
 
-Row
-------------------------------------------
+### E1 · PCA biplot of profile inputs
 
-### E2 · Standardized group centers
+<p>How do the standardized inputs drive separation in two dimensions?</p>
 
-<p>Identify the features that distinguish each profile.</p>
+<p>PC1 and PC2 capture <strong>`r sprintf("%.0f%%", 100 * sum(nyc$scores[1:2]))`</strong> of total standardized variance.</p>
 
 ::: {.nyc-viz}
 
@@ -555,13 +561,14 @@ charts[[5]][[3]]
 
 :::
 
-<p class="nyc-note">Each cell shows the center of a group in standard deviations from the complete-case sample mean.</p>
+<p class="nyc-note">Arrows show feature loading vectors. Click a point to locate the tract on the map.</p>
 
-### E2 · How well do tracts fit their group?
+Row
+------------------------------------------
 
-<p>Inspect the spread in silhouette values within each profile.</p>
+### E2 · Standardized profile signatures
 
-<p>Mean silhouette width is <strong>`r sprintf("%.2f", mean(nyc$profile$silhouette))`</strong> for the four-group model.</p>
+<p>What distinguishes each cluster across rent, noise, NYPD reports, and rail access?</p>
 
 ::: {.nyc-viz}
 
@@ -571,7 +578,37 @@ charts[[5]][[4]]
 
 :::
 
-<p class="nyc-note">Values near zero mark tracts between groups. The dashed line marks zero.</p>
+<p class="nyc-note">Lines plot standardized cluster centers (SD from sample mean); hover displays exact cluster medians in original units.</p>
+
+### E2 · Silhouette separation & blurry zone
+
+<p>Which profiles are sharply distinct versus overlapping?</p>
+
+<p>Mean silhouette width is <strong>`r sprintf("%.2f", mean(nyc$profile$silhouette))`</strong>; <strong>`r show_n(nyc$profile[silhouette < 0.10, .N])`</strong> tracts (`r sprintf("%.1f%%", 100 * mean(nyc$profile$silhouette < 0.10))`) sit in the blurry transition zone (&lt; 0.10).</p>
+
+::: {.nyc-viz}
+
+```{r chart-5-5}
+charts[[5]][[5]]
+```
+
+:::
+
+<p class="nyc-note">Dashed clay line marks 0 (potential cross-assignment); dotted line marks 0.10 (blurry transition boundary).</p>
+
+### E2 · Blurry boundary pair diagnostic
+
+<p>Which profile pairs share the most overlapping transition tracts?</p>
+
+::: {.nyc-viz}
+
+```{r chart-5-6}
+charts[[5]][[6]]
+```
+
+:::
+
+<p class="nyc-note"><strong>Readout:</strong> Overlap concentrates between P2 &lt;-&gt; P3 (140 tracts, 36.0% of the blurry zone) and P1 &lt;-&gt; P3 (113 tracts), whereas P2 &lt;-&gt; P4 has only 5 boundary tracts.</p>
 
 ```{r group-sensitivity, results='asis'}
 model_check <- copy(nyc$model_check)
@@ -592,37 +629,83 @@ htmltools::tags$details(class = "nyc-audit", id = "group-sensitivity",
 Row
 ------------------------------------------
 
-### E3 · Rank with your priorities
+### E3 · Same-budget candidate turnover
 
-<p>Give more weight to the measures that matter in this comparison.</p>
+<p>On the same rent budget, how many tracts stay vs. enter or exit when preferences change?</p>
+
+<div class="nyc-controls">
+  <label for="e-budget-cap">Budget cap</label>
+  <select id="e-budget-cap">
+    <option value="1800">&lt;= $1,800 / mo (958 tracts)</option>
+    <option value="2000" selected>&lt;= $2,000 / mo (1,330 tracts)</option>
+    <option value="2400">&lt;= $2,400 / mo (1,774 tracts)</option>
+    <option value="boro">Borough-median cap</option>
+  </select>
+  <label for="e-pool-size">Shortlist</label>
+  <select id="e-pool-size">
+    <option value="50">Top 50</option>
+    <option value="100" selected>Top 100</option>
+    <option value="150">Top 150</option>
+  </select>
+</div>
+<div class="nyc-controls"><output id="e-budget-status" aria-live="polite"></output></div>
+
+::: {.nyc-viz}
+
+```{r chart-5-7}
+charts[[5]][[7]]
+```
+
+:::
+
+<p class="nyc-note">Compares each 70%-priority scenario against the Balanced (equal 1/3 weights across noise, NYPD, and rail) shortlist within the selected budget cap.</p>
+
+### E3 · Borough shift across preference switches
+
+<p>How does switching preferences shift the candidate pool across NYC boroughs?</p>
+
+::: {.nyc-viz}
+
+```{r chart-5-8}
+charts[[5]][[8]]
+```
+
+:::
+
+<p class="nyc-note"><strong>Readout:</strong> Under &lt;= $2,000 (Top-100), switching to Closer to Station replaces 59 of 100 tracts (lifting Queens from 13 to 21 and Bronx from 3 to 7), while Less Nighttime Noise replaces 37 tracts (lifting Staten Island to 14).</p>
+
+Row {.tabset}
+------------------------------------------
+
+### Candidate Turnover Explorer (&lt;= $2,000 Benchmark, Top-100)
+
+<p class="nyc-note">Search or filter tracts that enter any Top-100 shortlist under the $2,000 benchmark budget. Lower rank number = stronger match.</p>
+
+```{r e-turnover-table}
+turnover_explorer_table(nyc, budget_cap = 2000, top_n = 100L)
+```
+
+### Custom Weight &amp; Rank-Shift Sandbox
 
 <div class="nyc-controls" id="e-presets"><button value="equal" type="button">Equal weights</button><button value="quiet" type="button">Quiet priority</button><button value="rail" type="button">Rail priority</button></div><div class="nyc-weights"><label for="w-cost">Lower rent <output id="v-cost">25%</output><input id="w-cost" type="range" min="0" max="100" value="25"></label><label for="w-quiet">Fewer night reports <output id="v-quiet">25%</output><input id="w-quiet" type="range" min="0" max="100" value="25"></label><label for="w-reports">Fewer NYPD reports <output id="v-reports">25%</output><input id="w-reports" type="range" min="0" max="100" value="25"></label><label for="w-rail">Closer rail <output id="v-rail">25%</output><input id="w-rail" type="range" min="0" max="100" value="25"></label></div>
 
 ::: {.nyc-viz}
 
-```{r chart-5-5}
-charts[[5]][[5]]
+```{r chart-5-9}
+charts[[5]][[9]]
 ```
 
 :::
-
-<p class="nyc-note">Scores combine four favorable percentiles for rent, night requests, NYPD complaints and rail distance. The density measure used in the profiles has no fixed preference direction. Sliders are normalized to sum to 100%.</p>
-
-### E3 · Rank changes from equal weights
-
-<p>Track how the eight tracts in your current shortlist moved.</p>
 
 <div class="nyc-controls"><output id="e-rank-status" aria-live="polite"></output></div>
 
 ::: {.nyc-viz}
 
-```{r chart-5-6}
-charts[[5]][[6]]
+```{r chart-5-10}
+charts[[5]][[10]]
 ```
 
 :::
-
-<p class="nyc-note">The left axis shows each tract’s rank under equal weights. The right axis shows its rank under the current priorities.</p>
 
 ```{r interactivity, results='asis'}
 types <- c("All types", noise_types)
@@ -634,8 +717,10 @@ hour_data <- setNames(lapply(types, function(x) {
 weights <- calendar[, .N, by = weekday][match(1:7, weekday), N]
 sensitivity <- nyc$profile[, .(GEOID, label, borough, cost, quiet, reports, rail, rent, night_rate, nypd_rate, station_m)]
 link_labels <- nyc$profile[, .(label, GEOID, quad, cluster)]
+boro_med_map <- setNames(as.list(boro_rent$median_rent), boro_rent$borough)
 payload <- jsonlite::toJSON(list(noise = hour_data, days = weights, profiles = sensitivity,
-                                 links = link_labels, colors = as.list(boro_colors)), auto_unbox = TRUE)
+                                 links = link_labels, colors = as.list(boro_colors),
+                                 boro_med = boro_med_map), auto_unbox = TRUE)
 cat("\n```{=html}\n<script type='application/json' id='nyc-payload'>", payload, "</script>\n<script>\n",
     paste(readLines("scripts/dashboard.js", warn = FALSE), collapse = "\n"), "\n</script>\n```\n", sep = "")
 ```

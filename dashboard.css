@@ -43,3 +43,13 @@ body { background: #edf3f0; color: var(--ink); font-family: 'Avenir Next', Arial
 .nyc-key span { border-left: 10px solid var(--swatch); padding-left: 5px; }
 a { color: #196d6c; }
 @media (max-width: 767px) { .chart-wrapper .chart-stage { padding: 8px; } .nyc-viz > .html-widget { height: 310px !important; } }
+
+.nyc-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 6px 0 10px; }
+.nyc-kpi { background: var(--paper); border: 1px solid var(--rule); border-left: 4px solid var(--accent); border-radius: 7px; padding: 9px 12px; }
+.nyc-kpi-val { font-size: 20px; font-weight: 700; color: var(--ink); line-height: 1.2; }
+.nyc-kpi-lbl { font-size: 12px; color: var(--soft-ink); margin-top: 2px; }
+.nyc-dt { font-size: 12px; color: var(--ink); }
+.nyc-dt table.dataTable thead th { background: #f7faf8; color: var(--ink); border-bottom: 1px solid var(--rule); }
+@media (max-width: 900px) { .nyc-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .nyc-kpis { grid-template-columns: 1fr; } }
+

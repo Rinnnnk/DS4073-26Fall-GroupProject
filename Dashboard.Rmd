@@ -253,6 +253,8 @@ charts[[2]][[6]]
 Safety & Rail {#safety data-orientation=rows}
 ==========================================
 
+<p class="nyc-note"><strong>Analyst: ZhangJingchen · Student ID: 2430026269</strong></p>
+
 Row
 ------------------------------------------
 
@@ -260,7 +262,7 @@ Row
 
 <p>Where are reported complaint rates higher?</p>
 
-<p><strong>`r show_n(qa_nypd$unique_tract)` of `r show_n(qa_nypd$raw_rows)`</strong> 2024 reports matched one tract.</p>
+<p><strong>`r show_n(qa_nypd$unique_tract)` of `r show_n(qa_nypd$raw_rows)`</strong> 2024 reports matched one tract. Rates are mapped for <strong>`r show_n(nyc$tr[is.finite(nypd_rate), .N])`</strong> tracts.</p>
 
 ::: {.nyc-viz}
 
@@ -270,7 +272,9 @@ charts[[3]][[1]]
 
 :::
 
-<p class="nyc-note">The denominator is resident population. Spatial rates are shown for tracts with at least 500 residents.</p>
+<p class="nyc-note">Color bands make high-rate tracts easy to locate. The denominator is ACS resident population; rates are shown only for tracts with at least 500 residents. Reports reflect recorded incidents, not an individual risk estimate.</p>
+
+<p class="nyc-note"><strong>Readout:</strong> The median tract rate is 74.0 reports per 1,000 residents in the Bronx, compared with 36.2 on Staten Island. Borough medians summarize tracts equally; they are not borough-wide rates.</p>
 
 ### C1 · Offense-level mix
 
@@ -284,14 +288,14 @@ charts[[3]][[2]]
 
 :::
 
-<p class="nyc-note">Each stack shows the mix of geocoded reports matched to that borough. Source: <a href="https://data.cityofnewyork.us/d/qgea-i56i">NYPD historic complaint data</a>.</p>
+<p class="nyc-note">Each 100% stack compares the share of felony, misdemeanor and violation reports among geocoded records matched to that borough. Legend clicks isolate a category; hover shows counts. Source: <a href="https://data.cityofnewyork.us/d/qgea-i56i">NYPD historic complaint data</a>.</p>
 
 Row
 ------------------------------------------
 
 ### C2 · Distance to rail complexes
 
-<p>See how close tract representative points are to rail.</p>
+<p>Where are tracts farther from rail? This map includes <strong>`r show_n(nyc$tr[is.finite(station_m), .N])`</strong> tracts with a measured station distance.</p>
 
 ::: {.nyc-viz}
 
@@ -301,7 +305,7 @@ charts[[3]][[3]]
 
 :::
 
-<p class="nyc-note">Orange dots mark station complexes. Distances are straight lines from a point inside each tract to the nearest complex.</p>
+<p class="nyc-note">Sequential color bands identify farther tracts; orange dots mark station complexes. Distances are straight lines from a representative point inside each tract to the nearest complex, not travel distance or travel time.</p>
 
 ### C2 · Coverage at any distance
 
@@ -315,14 +319,16 @@ charts[[3]][[4]]
 
 :::
 
-<p class="nyc-note">The 0.8 km reference aids comparisons. The denominator is eligible tracts. Source: <a href="https://data.ny.gov/d/5f5g-n3cz">MTA station complexes</a>.</p>
+<p class="nyc-note">The step curves show the share of each borough's tracts within any chosen distance. The dashed 0.8 km reference makes borough coverage comparable. The denominator is all tracts with a measured distance in that borough. Source: <a href="https://data.ny.gov/d/5f5g-n3cz">MTA station complexes</a>.</p>
+
+<p class="nyc-note"><strong>Readout:</strong> Within 0.8 km are 93.9% of Manhattan tracts, 77.6% in Brooklyn, 72.6% in the Bronx, 42.4% in Queens and 23.0% on Staten Island.</p>
 
 Row
 ------------------------------------------
 
 ### C3 · Rail access and report rates
 
-<p>Do areas near rail show different reporting rates?</p>
+<p>Do areas near rail show different reporting rates? Compare <strong>`r show_n(nyc$tr[is.finite(nypd_rate) & is.finite(station_m), .N])`</strong> tracts within boroughs.</p>
 
 ::: {.nyc-viz}
 
@@ -332,7 +338,7 @@ charts[[3]][[5]]
 
 :::
 
-<p class="nyc-note">The vertical axis uses a log scale for skewed rates. Each point shows one tract. Compare patterns within boroughs.</p>
+<p class="nyc-note">Each point is one tract; borough colors support within-borough reading. The vertical axis is log1p transformed to show skewed rates while its tick labels remain reports per 1,000 residents. The pattern is descriptive and does not show whether rail access causes reporting differences.</p>
 
 ### C3 · Within-borough distance bands
 
@@ -346,7 +352,9 @@ charts[[3]][[6]]
 
 :::
 
-<p class="nyc-note">Each point summarizes at least five tracts. Visitor and worker flows can influence the rate based on resident population.</p>
+<p class="nyc-note">Points show tract medians within fixed distance bands; whiskers span the middle 50% and hover gives the sample size. Bands with fewer than five tracts are omitted. Compare bands within each borough; visitor and worker flows can influence rates based on resident population.</p>
+
+<p class="nyc-note"><strong>Readout:</strong> The nearest band has a higher median report rate than the 1.6 km+ band in the Bronx (87.7 versus 38.9 per 1,000), Brooklyn (54.2 versus 42.3) and Queens (52.8 versus 37.1). Staten Island is not monotonic across the four bands. Manhattan has only one tract in its farthest band, so that comparison is suppressed.</p>
 
 Rent & Noise {#tradeoffs data-orientation=rows}
 ==========================================

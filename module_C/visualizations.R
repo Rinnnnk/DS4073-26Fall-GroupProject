@@ -1,5 +1,8 @@
 safety_widgets <- function(d) {
-  t <- d$tr[is.finite(nypd_rate)]
+  # C1/C3 need a stable resident denominator; C2 describes all tracts with
+  # a measured station distance and must not inherit the NYPD rate filter.
+  t <- copy(d$tr[is.finite(nypd_rate) & is.finite(station_m)])
+  rail_tracts <- d$tr[is.finite(station_m)]
   nypd <- geo_map(d, "c-report-map", setNames(t$nypd_rate, t$GEOID), "Reports / 1,000",
     setNames(sprintf("%s · %.1f per 1,000 (%s reports)", t$label, t$nypd_rate, show_n(t$nypd_count)), t$GEOID),
     c(0, 25, 50, 100, 200, Inf))
@@ -16,12 +19,13 @@ safety_widgets <- function(d) {
   }
   severity <- finish(severity, "c-report-mix", "", "Share of matched NYPD reports", TRUE,
                      bottom = 78, barmode = "stack", y_options = list(tickformat = ".0%"))
-  rail <- geo_map(d, "c-station-map", setNames(t$station_m, t$GEOID), "Distance (m)",
-    setNames(paste0(t$label, " · ", show_n(t$station_m), " m<br>", t$station_name), t$GEOID),
+  rail <- geo_map(d, "c-station-map", setNames(rail_tracts$station_m, rail_tracts$GEOID), "Distance (m)",
+    setNames(paste0(rail_tracts$label, " · ", show_n(rail_tracts$station_m),
+                    " m<br>", rail_tracts$station_name), rail_tracts$GEOID),
     c(0, 400, 800, 1200, 2000, Inf), stations = TRUE)
   cdf <- plotly::plot_ly()
   for (b in borough_order) {
-    x <- sort(t[borough == b, station_m]) / 1000
+    x <- sort(rail_tracts[borough == b, station_m]) / 1000
     cdf <- plotly::add_lines(cdf, x = c(0, x), y = (0:length(x))/length(x), name = b,
       line = list(color = boro_colors[[b]], width = 2.1, shape = "hv"),
       hovertemplate = "%{x:.2f} km · %{y:.1%}<extra>%{fullData.name}</extra>")
@@ -39,13 +43,20 @@ safety_widgets <- function(d) {
     y_options = list(tickvals = log1p(rate_ticks), ticktext = rate_ticks))
   ranges <- c("0–399 m", "400–799 m", "800–1,599 m", "1,600 m+")
   t[, distance_band := cut(station_m, c(0, 400, 800, 1600, Inf), labels = ranges, right = FALSE)]
-  binned <- t[, .(mid = median(nypd_rate), n = .N), by = .(borough, distance_band)][n >= 5L]
+  binned <- t[, .(mid = median(nypd_rate), q1 = as.numeric(quantile(nypd_rate, .25)),
+                  q3 = as.numeric(quantile(nypd_rate, .75)), n = .N),
+              by = .(borough, distance_band)][n >= 5L]
   groups <- plotly::plot_ly()
   for (b in borough_order) {
     cell <- binned[borough == b][order(distance_band)]
     groups <- plotly::add_markers(groups, x = cell$distance_band, y = cell$mid, name = b,
-      marker = list(color = boro_colors[[b]], size = 9), customdata = cell$n,
-      hovertemplate = "%{x}<br>Median %{y:.1f} per 1,000<br>%{customdata} tracts<extra>%{fullData.name}</extra>")
+      marker = list(color = boro_colors[[b]], size = 9),
+      error_y = list(type = "data", symmetric = FALSE, array = cell$q3 - cell$mid,
+                     arrayminus = cell$mid - cell$q1, color = boro_colors[[b]], thickness = 1),
+      customdata = cbind(cell$n, round(cell$q1, 1), round(cell$q3, 1)),
+      hovertemplate = paste0("%{x}<br>Median %{y:.1f} per 1,000",
+                             "<br>Middle 50%: %{customdata[1]:.1f}–%{customdata[2]:.1f}",
+                             "<br>%{customdata[0]} tracts<extra>%{fullData.name}</extra>"))
   }
   groups <- finish(groups, "c-rail-bands", "Distance band", "Median reports per 1,000",
     TRUE, bottom = 79, x_options = list(categoryorder = "array", categoryarray = ranges),

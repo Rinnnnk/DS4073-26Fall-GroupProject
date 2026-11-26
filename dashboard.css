@@ -49,3 +49,31 @@ body { background: #edf3f0; color: var(--ink); font-family: 'Avenir Next', Arial
 .nyc-key span { border-left: 10px solid var(--swatch); padding-left: 5px; }
 a { color: #196d6c; }
 @media (max-width: 767px) { .chart-wrapper .chart-stage { padding: 8px; } .nyc-viz > .html-widget { height: 310px !important; } }
+
+.nyc-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 6px 0 10px; }
+.nyc-kpi { background: var(--paper); border: 1px solid var(--rule); border-left: 4px solid var(--accent); border-radius: 7px; padding: 9px 12px; }
+.nyc-kpi-val { font-size: 20px; font-weight: 700; color: var(--ink); line-height: 1.2; }
+.nyc-kpi-lbl { font-size: 12px; color: var(--soft-ink); margin-top: 2px; }
+.nyc-dt { font-size: 12px; color: var(--ink); }
+.nyc-dt table.dataTable thead th { background: #f7faf8; color: var(--ink); border-bottom: 1px solid var(--rule); }
+@media (max-width: 900px) { .nyc-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .nyc-kpis { grid-template-columns: 1fr; } }
+
+
+/* Housing module styles from the submitted standalone page. */
+.a-author { margin: 2px 0 10px; padding: 5px 9px; border-left: 3px solid #217B78; color: var(--soft-ink); line-height: 1.45; }
+.a-budget-control { max-width: 460px; }
+.a-budget-control label { display: flex; justify-content: space-between; gap: 12px; color: var(--ink); }
+.a-budget-control label output { display: inline; padding: 0; color: var(--accent); font-weight: 700; }
+.a-budget-control input[type=range] { width: 100%; accent-color: var(--accent); margin-bottom: 5px; }
+.a-budget-control [role=status] { margin: 3px 0 0; }
+.a-case-layout { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); align-items: center; gap: 22px; }
+.a-case-copy { border-left: 1px solid var(--rule); padding-left: 20px; }
+.nyc-viz.a-case-viz > .html-widget { height: 255px !important; }
+.leaflet-tooltip.a-borough-map-label { background: transparent; border: 0; box-shadow: none; color: #173743;
+  font-size: 11px; font-weight: 700; pointer-events: none; text-shadow: 0 0 3px #fff, 0 0 3px #fff, 0 0 3px #fff; }
+@media (max-width: 767px) { .chart-wrapper .chart-stage { padding: 8px; } .nyc-viz > .html-widget { height: 310px !important; } }
+@media (max-width: 767px) {
+  .a-case-layout { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .a-case-copy { border-left: 0; border-top: 1px solid var(--rule); padding: 9px 4px 0; }
+}

@@ -4,7 +4,7 @@ A Census Tract Analysis of Rent, Noise Complaints, Police Reports, and Rail Acce
 
 DS4073 Group 6 的协作起点。研究问题是，在纽约市同一个行政区内，租金相近的普查区在夜间噪音举报率、NYPD 报案率和到最近车站的直线距离上会相差多少，以及不同偏好会怎样改变候选名单。
 
-下载仓库后在浏览器打开 [Dashboard.html](Dashboard.html)。它包含五页、15 个任务和 30 个主要图表，地图和交互可离线运行。在 GitHub 网页打开 HTML 文件时，可以用 Download raw file 下载后在本地查看。
+下载仓库后在浏览器打开 [Dashboard.html](Dashboard.html)。它包含五页、15 个任务和 39 个图表，地图和交互可离线运行。在 GitHub 网页打开 HTML 文件时，可以用 Download raw file 下载后在本地查看。
 
 [当前版本与可深化方向](VERSION.md)
 
@@ -18,6 +18,8 @@ DS4073 Group 6 的协作起点。研究问题是，在纽约市同一个行政�
 | [D · 同区同价](module_D/README.md) | 租金相近的地方，夜间举报率能相差多少？ |
 | [E · 画像与偏好](module_E/README.md) | 常见的指标组合有哪些？改变偏好后候选名单如何变化？ |
 
+每行最多两张图，各任务第三张另起一行。
+
 各模块的 `visualizations.R` 由 `Dashboard.Rmd` 加载。改自己模块的图时，从该目录的 R 文件入手。修改标题、图注和布局时编辑 `Dashboard.Rmd` 对应页面。共享分析在 `scripts/analysis.R`，通用图表函数在 `scripts/widgets.R`，页面联动在 `scripts/dashboard.js`。修改后从仓库根目录重新渲染并检查。
 
 ## 用 R 重新生成 Dashboard
@@ -26,7 +28,7 @@ DS4073 Group 6 的协作起点。研究问题是，在纽约市同一个行政�
 
 ```r
 install.packages(c("data.table", "sf", "units", "jsonlite", "rmarkdown", "knitr",
-                   "flexdashboard", "plotly", "leaflet", "htmltools", "htmlwidgets", "cluster"))
+                   "flexdashboard", "plotly", "leaflet", "htmltools", "htmlwidgets", "cluster", "DT"))
 rmarkdown::render("Dashboard.Rmd")
 ```
 

@@ -50,23 +50,27 @@ window.HTMLWidgets.addPostRenderHandler(function () {
     const map = window.nycMaps?.[mapID];
     if (map) {
       const old = highlights.get(mapID);
-      if (old) old.setStyle({ color: '#FFFFFF', weight: .6 });
+      if (old && old._map) old.setStyle({ color: '#FFFFFF', weight: .6 });
       const current = map.layerManager.getLayer('shape', id);
       if (current) {
-        current.bringToFront();
+        if (current._map && typeof current.bringToFront === 'function') current.bringToFront();
         current.setStyle({ color: '#BA7930', weight: 3 });
         highlights.set(mapID, current);
       }
     }
     const plot = byId(plotID);
-    const selected = plot.data.map(trace => {
-      const index = trace.customdata?.indexOf(id) ?? -1;
-      return index < 0 ? [] : [index];
-    });
-    Plotly.restyle(plot, { selectedpoints: selected, 'selected.marker.opacity': 1, 'unselected.marker.opacity': .17 });
+    if (plot && plot.data) {
+      const selected = plot.data.map(trace => {
+        const index = trace.customdata?.indexOf(id) ?? -1;
+        return index < 0 ? [] : [index];
+      });
+      Plotly.restyle(plot, { selectedpoints: selected, 'selected.marker.opacity': 1, 'unselected.marker.opacity': .17 });
+    }
     const isMismatch = plotID === 'd-quadrant';
-    byId(isMismatch ? 'd-selection' : 'e-selection').textContent =
-      `${tract.label} · ${isMismatch ? tract.quad : 'Profile ' + tract.cluster}`;
+    const statusEl = byId(isMismatch ? 'd-selection' : 'e-selection');
+    if (statusEl) {
+      statusEl.textContent = `${tract.label} · ${isMismatch ? tract.quad : 'Profile ' + tract.cluster}`;
+    }
   }
   document.addEventListener('nyc-tract-select', event => {
     const choice = event.detail;
@@ -101,13 +105,17 @@ window.HTMLWidgets.addPostRenderHandler(function () {
     const current = profiles.map(row => ({ ...row, score: score(row, weights) })).sort(order).slice(0, 8);
     const earlier = current.map(row => baselineRank.get(row.GEOID));
     const colors = current.map(row => payload.colors[row.borough]);
-    Plotly.restyle(rankPlot, {
+    Plotly.update(rankPlot, {
       x: [current.map(row => row.score)],
       y: [current.map(row => row.label)],
       text: [current.map(row => row.score.toFixed(1))],
       customdata: [current.map(row => `Rent $${row.rent.toLocaleString('en-US')}<br>Night requests/1,000: ${row.night_rate.toFixed(1)}<br>Rail: ${Math.round(row.station_m)} m`)],
       hovertemplate: '%{y}<br>Score %{x:.1f}<br>%{customdata}<extra></extra>',
       'marker.color': [colors]
+    }, {
+      'yaxis.categoryorder': 'array',
+      'yaxis.categoryarray': current.map(row => row.label),
+      'yaxis.autorange': 'reversed'
     });
     const maximum = Math.max(...earlier, 8);
     Plotly.update(slope, {
@@ -136,5 +144,106 @@ window.HTMLWidgets.addPostRenderHandler(function () {
     scheduleRank();
   });
   showRank();
+
+  // --- Module E3: Same-budget preference switching & turnover ---------------
+  const budgetSelect = byId('e-budget-cap');
+  const poolSelect = byId('e-pool-size');
+  const turnoverPlot = byId('e-turnover');
+  const boroShiftPlot = byId('e-boro-shift');
+  const eBudgetStatus = byId('e-budget-status');
+
+  const eScenarios = [
+    { key: 'bal',   label: 'Balanced',            w: [0, 1 / 3, 1 / 3, 1 / 3] },
+    { key: 'quiet', label: 'Less Nighttime Noise', w: [0, 0.70, 0.15, 0.15] },
+    { key: 'safe',  label: 'Fewer NYPD Reports',  w: [0, 0.15, 0.70, 0.15] },
+    { key: 'rail',  label: 'Closer to Station',   w: [0, 0.15, 0.15, 0.70] }
+  ];
+
+  function medianVal(arr) {
+    if (!arr.length) return 0;
+    const s = arr.slice().sort((a, b) => a - b);
+    const m = Math.floor(s.length / 2);
+    return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+  }
+
+  function updateBudgetTurnover() {
+    if (!budgetSelect || !poolSelect || !turnoverPlot || !boroShiftPlot) return;
+    const capVal = budgetSelect.value;
+    const topN = Number(poolSelect.value) || 100;
+    const eligible = profiles.filter(row => {
+      if (capVal === 'boro') return row.rent <= (payload.boro_med?.[row.borough] ?? 99999);
+      return row.rent <= Number(capVal);
+    });
+    const k = Math.min(topN, eligible.length);
+    const sets = {};
+    const pools = {};
+    eScenarios.forEach(sc => {
+      const ranked = eligible.map(row => ({ ...row, score: score(row, sc.w) })).sort(order).slice(0, k);
+      pools[sc.key] = ranked;
+      sets[sc.key] = new Set(ranked.map(r => r.GEOID));
+    });
+
+    const baseSet = sets.bal;
+    const switchScens = eScenarios.slice(1);
+    const retained = switchScens.map(sc => [...sets[sc.key]].filter(id => baseSet.has(id)).length);
+    const entered  = switchScens.map(sc => [...sets[sc.key]].filter(id => !baseSet.has(id)).length);
+    const exited   = switchScens.map(sc => [...baseSet].filter(id => !sets[sc.key].has(id)).length);
+
+    Plotly.restyle(turnoverPlot, {
+      y: [retained, entered, exited]
+    });
+
+    const boroNames = Object.keys(payload.colors);
+    const yTraces = boroNames.map(b => eScenarios.map(sc => pools[sc.key].filter(r => r.borough === b).length));
+    const textTraces = boroNames.map(b => eScenarios.map(sc => {
+      const sub = pools[sc.key].filter(r => r.borough === b);
+      if (!sub.length) return `${b}: 0 tracts`;
+      const mRent = Math.round(medianVal(sub.map(r => r.rent))).toLocaleString('en-US');
+      const mNight = medianVal(sub.map(r => r.night_rate)).toFixed(1);
+      const mNypd = medianVal(sub.map(r => r.nypd_rate)).toFixed(1);
+      const mRail = Math.round(medianVal(sub.map(r => r.station_m))).toLocaleString('en-US');
+      return `${b}: ${sub.length} tracts<br>Med rent: $${mRent} | Night: ${mNight}/1k<br>NYPD: ${mNypd}/1k | Rail: ${mRail} m`;
+    }));
+
+    Plotly.restyle(boroShiftPlot, {
+      y: yTraces,
+      customdata: textTraces
+    });
+
+    if (eBudgetStatus) {
+      const pcts = entered.map((v, idx) => `${switchScens[idx].label}: ${Math.round(100 * v / k)}%`);
+      const capLabel = capVal === 'boro' ? 'Borough-median cap' : `<= $${Number(capVal).toLocaleString('en-US')}`;
+      eBudgetStatus.textContent = `${eligible.length.toLocaleString('en-US')} eligible tracts (${capLabel}) · Top-${k} turnover: ${pcts.join(' | ')}`;
+    }
+  }
+
+  if (budgetSelect && poolSelect) {
+    budgetSelect.addEventListener('change', updateBudgetTurnover);
+    poolSelect.addEventListener('change', updateBudgetTurnover);
+    updateBudgetTurnover();
+  }
+
+  // Ensure hidden tab Plotly charts and DataTables resize cleanly when revealed.
+  function resizeTabWidgets(container) {
+    if (!container) return;
+    const plots = container.querySelectorAll('.js-plotly-plot');
+    plots.forEach(el => {
+      if (window.Plotly && Plotly.Plots) Plotly.Plots.resize(el);
+    });
+    if (window.jQuery && window.jQuery.fn && window.jQuery.fn.dataTable) {
+      window.jQuery(container).find('table.dataTable').each(function () {
+        window.jQuery(this).DataTable().columns.adjust();
+      });
+    }
+    window.dispatchEvent(new Event('resize'));
+  }
+
+  if (window.jQuery) {
+    window.jQuery(document).on('shown.bs.tab', 'a[data-toggle="tab"]', function (e) {
+      const targetSel = e.target.getAttribute('href');
+      if (targetSel) resizeTabWidgets(document.querySelector(targetSel));
+    });
+  }
+
   payloadNode.dataset.ready = 'true';
 });

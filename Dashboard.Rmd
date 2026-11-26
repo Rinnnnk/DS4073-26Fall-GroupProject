@@ -20,9 +20,17 @@ source("module_C/visualizations.R")
 source("module_D/visualizations.R")
 source("module_E/visualizations.R")
 nyc <- load_analysis()
-charts <- list(housing_widgets(nyc), noise_widgets(nyc), safety_widgets(nyc),
+b1_medians <- nyc$tr[borough %in% c("Bronx", "Manhattan") & is.finite(night_rate),
+  .(median_rate = median(night_rate)), by = borough]
+b2_days <- calendar[, .(days = .N), by = .(weekend = weekday >= 6L)]
+b2_residential <- period_data(nyc, "Residential")[, .(calls = sum(calls)),
+  by = .(weekend = weekday >= 6L, hour)]
+b2_residential[b2_days, daily := calls / i.days, on = "weekend"]
+b2_peaks <- b2_residential[order(-daily, hour), .SD[1L], by = weekend]
+b3 <- noise_monthly_summary(nyc$time)
+charts <- list(housing_widgets(nyc), noise_widgets(nyc, b3), safety_widgets(nyc),
                tradeoff_widgets(nyc), profile_widgets(nyc))
-stopifnot(length(charts) == 5L, all(lengths(charts) == 6L))
+stopifnot(identical(lengths(charts), c(6L, 8L, 6L, 6L, 6L)))
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 qa_noise <- nyc$audit[source == "311 noise"]
 qa_nypd <- nyc$audit[source == "NYPD"]
@@ -31,8 +39,6 @@ num_profiles <- nrow(nyc$profile)
 ex <- nyc$examples
 quad_n <- nyc$profile[quad == quad_labels[4], .N]
 boro_rent <- nyc$tr[!is.na(rent), .(median_rent = median(as.numeric(rent))), by = borough][order(-median_rent)]
-peak_month <- nyc$time[borough == "All NYC", .(rate = sum(N)), by = month][
-  , rate := rate / tabulate(calendar$month)[month]][which.max(rate), month]
 ```
 
 Housing {#housing data-orientation=rows}
@@ -154,7 +160,9 @@ Row
 
 ### B1 · Noise request mix
 
-<p>What do residents report to 311 in each borough?</p>
+<p class="nyc-owner">Wang Tenghan · Student ID 2430026201</p>
+
+<p>What types of noise are reported to 311 in each borough?</p>
 
 <p>The full 2024 dataset contains <strong>`r show_n(qa_noise$raw_rows)`</strong> noise requests.</p>
 
@@ -181,6 +189,28 @@ charts[[2]][[2]]
 :::
 
 <p class="nyc-note">The denominator is ACS resident population. Reporting rates also reflect how people use 311 and who is present in an area.</p>
+
+Row
+------------------------------------------
+
+### B1 · Late-night rates within boroughs
+
+<p>How much do late-night reporting rates vary between tracts in the same borough?</p>
+
+::: {.nyc-viz}
+
+```{r chart-2-7}
+charts[[2]][[7]]
+```
+
+:::
+
+<p class="nyc-note">Boxes show the middle half of tract rates. Dots mark outliers. Each tract has equal weight, with at least 500 residents. The rate axis uses a log scale.</p>
+
+<div class="nyc-task-notes" id="b1-task-notes">
+<p><strong>Design</strong> Stacked bars show the category mix, grouped bars compare per-capita rates on a common scale, and boxplots reveal the spread of tract rates within each borough.</p>
+<p><strong>Finding</strong> The Bronx and Manhattan had similar median late-night rates (`r sprintf("%.1f", b1_medians[borough == "Bronx", median_rate])` and `r sprintf("%.1f", b1_medians[borough == "Manhattan", median_rate])` reports per 1,000 residents), with substantial variation among tracts in both.</p>
+</div>
 
 Row
 ------------------------------------------
@@ -217,14 +247,17 @@ charts[[2]][[4]]
 
 <p class="nyc-note">The selected day from the heatmap appears in clay. The two reference curves account for the different numbers of weekdays and weekend days.</p>
 
+<div class="nyc-task-notes" id="b2-task-notes">
+<p><strong>Design</strong> Heatmap color intensity locates peak hours, and the linked line chart compares weekday and weekend counts on the same hourly axes.</p>
+<p><strong>Finding</strong> Residential reports peaked at `r sprintf("%02d:00", b2_peaks[weekend == FALSE, hour])` on both weekdays and weekends, averaging `r sprintf("%.1f", b2_peaks[weekend == FALSE, daily])` and `r sprintf("%.1f", b2_peaks[weekend == TRUE, daily])` reports per day in that hour, respectively.</p>
+</div>
+
 Row
 ------------------------------------------
 
 ### B3 · Monthly reporting volume
 
-<p>How did the reporting volume change during 2024?</p>
-
-<p><strong>`r month.name[peak_month]`</strong> had the highest daily average across all noise types in 2024.</p>
+<p class="nyc-b3-summary">Average daily reports rose by <strong>`r show_n(b3$gain)`</strong> from August to September. Residential reports contributed <strong>`r sprintf("%.0f%%", 100 * b3$residential_share)`</strong> of the increase.</p>
 
 ::: {.nyc-viz}
 
@@ -234,11 +267,11 @@ charts[[2]][[5]]
 
 :::
 
-<p class="nyc-note">Rates use the actual number of calendar days in each month. Select legend items to compare categories.</p>
+<p class="nyc-note">Monthly counts are divided by calendar days. Use the legend to compare request types.</p>
 
 ### B3 · Monthly late-night share
 
-<p>Did the share of late-night requests change too?</p>
+<p class="nyc-b3-summary">The citywide late-night share fell from <strong>`r show_pct(b3$pair$night_share[1])`</strong> in August to <strong>`r show_pct(b3$pair$night_share[2])`</strong> in September, even as late-night reports increased.</p>
 
 ::: {.nyc-viz}
 
@@ -248,7 +281,29 @@ charts[[2]][[6]]
 
 :::
 
-<p class="nyc-note">Late night means 22:00–05:59 local time. The records measure reports people made to 311. Source: <a href="https://data.cityofnewyork.us/d/erm2-nwe9">NYC 311</a>.</p>
+<p class="nyc-note">Late night means 22:00–05:59 local time. Late-night reports rose from `r show_n(b3$pair$night_per_day[1])` to `r show_n(b3$pair$night_per_day[2])` per day. <a href="https://data.cityofnewyork.us/d/erm2-nwe9">NYC 311 data</a>.</p>
+
+Row
+------------------------------------------
+
+### B3 · Volume and late-night share by borough
+
+<p class="nyc-b3-summary">Did all five boroughs follow the citywide shift from August to September?</p>
+
+::: {.nyc-viz}
+
+```{r chart-2-8}
+charts[[2]][[8]]
+```
+
+:::
+
+<p class="nyc-note">Each point is one borough in one month. The highlighted segments connect August (open circles) to September (diamonds). Hover for the month and its values.</p>
+
+<div class="nyc-task-notes" id="b3-task-notes">
+<p><strong>Design</strong> Lines reveal changes by month, while the scatterplot uses two position scales to compare daily volume and late-night share across boroughs.</p>
+<p><strong>Finding</strong> From August to September, daily reports rose citywide while the late-night share fell in `r b3$borough_shift[share_change < 0, .N]` of `r nrow(b3$borough_shift)` boroughs, with Brooklyn the exception.</p>
+</div>
 
 Safety & Rail {#safety data-orientation=rows}
 ==========================================

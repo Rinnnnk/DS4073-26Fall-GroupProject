@@ -31,6 +31,12 @@ pair_gaps <- function(d, threshold = 100) {
   pairs[]
 }
 
+ordinal <- function(x) {
+  x <- as.integer(round(x))
+  suffix <- if (x %% 100 %in% 11:13) "th" else c("th", "st", "nd", "rd")[x %% 10 + 1]
+  paste0(x, suffix)
+}
+
 ecdf_points <- function(x, n = 180) {
   # A compact empirical CDF on a quantile grid keeps the self-contained HTML small.
   probs <- seq(0.01, 0.99, length.out = n)
@@ -42,6 +48,7 @@ pair_thresholds <- function(d, thresholds = c(50, 100, 150)) {
     p <- pair_gaps(d, t)
     data.table(threshold = t, pairs = nrow(p),
                night_median = median(p$night_gap),
+               night_p75 = as.numeric(quantile(p$night_gap, .75)),
                night_p90 = as.numeric(quantile(p$night_gap, .9)),
                nypd_median = median(p$nypd_gap),
                station_median = median(p$station_gap))
@@ -78,6 +85,9 @@ pair_summary <- function(d) {
     night_median = median(p$night_gap), night_p90 = as.numeric(quantile(p$night_gap, .9)),
     share_large = mean(p$night_gap >= 50), share_25 = mean(p$night_gap >= 25),
     nypd_median = median(p$nypd_gap), station_median = median(p$station_gap),
+    gap_reach = c(night = as.numeric(quantile(p$night_gap, .9)) / median(p$night_gap),
+                  nypd = as.numeric(quantile(p$nypd_gap, .9)) / median(p$nypd_gap),
+                  rail = as.numeric(quantile(p$station_gap, .9)) / median(p$station_gap)),
     station_1km = mean(p$station_gap >= 1000), share_station_500 = mean(p$station_gap >= 500),
     max_pairs_tract = max(table(c(p$a, p$b))),
     example_night_pct = pct(p$night_gap, example$night_gap),
@@ -103,8 +113,23 @@ tradeoff_widgets <- function(d) {
            line = list(color = muted, dash = "dash", width = 1)),
       list(type = "line", y0 = log1p(d$night_cut), y1 = log1p(d$night_cut), x0 = 0, x1 = 1, xref = "paper",
            line = list(color = muted, dash = "dash", width = 1))))
-  map <- geo_map(d, "d-quad-map", setNames(p$quad, p$GEOID), "Above/below NYC medians",
-                 setNames(paste0(text, "<br>", p$quad), p$GEOID), groups = quad_colors, linked = "d-quadrant")
+  fit <- stats::lowess(p$rent, p$night_log, f = 0.65)
+  quad <- plotly::add_lines(quad, x = fit$x, y = fit$y, name = "Local fit",
+    line = list(color = navy, width = 1.6, dash = "dash"), hoverinfo = "skip")
+  # D1 map: for each tract, the largest night-report gap it reaches against a
+  # same-borough tract with a rent within $100. This is the "locate" half of D1.
+  mg <- rbind(s$pairs[, .(GEOID = a, partner = b_label, gap = night_gap)],
+              s$pairs[, .(GEOID = b, partner = a_label, gap = night_gap)])
+  mg <- mg[order(-gap)][, .SD[1L], by = GEOID]
+  gap_value <- setNames(rep(NA_real_, nrow(d$shapes)), d$shapes$geoid)
+  gap_value[mg$GEOID] <- mg$gap
+  hit <- match(mg$GEOID, d$tr$GEOID)
+  gap_label <- setNames(paste0(
+    d$tr$label[hit], "<br>", show_rent(d$tr$rent[hit]), " gross rent<br>",
+    sprintf("%.1f", d$tr$night_rate[hit]), " late-night requests per 1,000<br>",
+    "Largest same-rent gap: ", sprintf("%.1f", mg$gap), " vs ", mg$partner), mg$GEOID)
+  map <- geo_map(d, "d-quad-map", gap_value, "Largest night-report gap within $100",
+                 gap_label, bins = c(0, 10, 25, 50, 100, Inf), linked = "d-quadrant")
 
   # D2 chart 1: how wide are the three gaps among same-borough, similar-rent pairs.
   # Requests per 1,000 and metres cannot share a raw axis, so each gap is divided
@@ -128,26 +153,53 @@ tradeoff_widgets <- function(d) {
       hovertemplate = paste0(m$name, "<br>%{x:.1f}x the median (", m$raw, m$unit,
                              ")<br>%{y:.0%} of pairs<extra></extra>"))
   }
+  reach <- rbindlist(lapply(measures, function(m) {
+    data.table(x = as.numeric(quantile(m$values, .9)) / median(m$values),
+               y = 0.9, label = paste0(sprintf("%.1f", as.numeric(quantile(m$values, .9)) / median(m$values)), "x"),
+               color = m$color, name = m$name)
+  }))
+  gaps <- plotly::add_markers(gaps, x = reach$x, y = reach$y, showlegend = FALSE,
+    hoverinfo = "skip",
+    marker = list(color = reach$color, size = 9, line = list(color = "#FFFFFF", width = 1)))
   gaps <- finish(gaps, "d-pair-gaps", "Gap within the pair, relative to the typical gap",
     "Share of pairs at or below", TRUE, left = 84, bottom = 74,
     x_options = list(type = "log", range = c(-1.8, 2.2)),
     shapes = list(list(type = "line", x0 = 1, x1 = 1, y0 = 0, y1 = 1, yref = "paper",
-      line = list(color = muted, dash = "dot", width = 1.2))))
+                       line = list(color = muted, dash = "dot", width = 1.2)),
+                  list(type = "line", x0 = 0, x1 = 1, xref = "paper", y0 = 0.9, y1 = 0.9,
+                       line = list(color = muted, dash = "dot", width = 1.2))),
+    annotations = list(list(x = 0.015, y = 0.93, xref = "paper", yref = "y",
+      text = "90% of pairs", showarrow = FALSE, xanchor = "left",
+      font = list(size = 10, color = muted)),
+      list(x = 0.015, y = 0.47, xref = "paper", yref = "paper",
+      text = "1x = the typical gap for that indicator", showarrow = FALSE,
+      xanchor = "left", font = list(size = 10, color = muted))))
 
   # D2 chart 2: does moving the rent window change the answer.
+  # One line per quantile, drawn across the three windows. Flat lines mean the
+  # result does not depend on where the $100 cut is placed.
+  qs <- list(
+    list(name = "90th percentile", at = "night_p90", color = navy),
+    list(name = "75th percentile", at = "night_p75", color = teal),
+    list(name = "Median", at = "night_median", color = "#50917D"))
   stable <- plotly::plot_ly()
-  shades <- setNames(c("#9CC3BE", "#2E8079", "#173F52"), c(50, 100, 150))
-  for (t in c(50, 100, 150)) {
-    pts <- ecdf_points(pair_gaps(d, t)$night_gap)
-    pts[, x := pmax(x, 0.05)]
-    stable <- plotly::add_lines(stable, x = pts$x, y = pts$y,
-      name = paste0("$", t, " window"),
-      line = list(color = shades[[as.character(t)]], width = 2.4),
-      hovertemplate = paste0("$", t, "<br>%{x:.1f} requests / 1,000<br>%{y:.0%} of pairs<extra></extra>"))
+  for (q in qs) {
+    stable <- plotly::add_trace(stable, x = s$thresholds$threshold, y = s$thresholds[[q$at]],
+      type = "scatter", mode = "lines+markers", name = q$name,
+      line = list(color = q$color, width = 2.2),
+      marker = list(color = q$color, size = 9, line = list(color = "#FFFFFF", width = 1.2)),
+      hovertemplate = paste0(q$name, "<br>$%{x} window<br>%{y:.1f} requests per 1,000<extra></extra>"))
   }
-  stable <- finish(stable, "d-pair-threshold", "Night-report gap within the pair (log scale)",
-    "Share of pairs at or below", TRUE, left = 84, bottom = 74,
-    x_options = list(type = "log", range = c(-0.6, 3.2)))
+  widest <- max(abs(s$thresholds[[2]] - s$thresholds[[3]]))
+  stable <- finish(stable, "d-pair-threshold", "Rent difference allowed inside the pair ($)",
+    "Night-report gap within the pair", TRUE, left = 84, bottom = 74,
+    x_options = list(tickvals = c(50, 100, 150), ticktext = c("$50", "$100", "$150"),
+                     range = c(20, 180)),
+    y_options = list(rangemode = "tozero"),
+    annotations = list(list(x = 100, y = max(s$thresholds$night_p90) * 1.06,
+      text = sprintf("Every line is flat: widening the window by $100 moves a quantile by under %.1f",
+                     widest),
+      showarrow = FALSE, font = list(size = 10.5, color = muted))))
 
   # D3 chart 1: put the chosen pair back into the full distribution.
   base <- ecdf_points(s$pairs$night_gap)
@@ -164,7 +216,7 @@ tradeoff_widgets <- function(d) {
     shapes = list(list(type = "line", x0 = s$example$night_gap, x1 = s$example$night_gap,
       y0 = 0, y1 = s$example_night_pct / 100, line = list(color = clay, dash = "dot", width = 1.4))),
     annotations = list(list(x = s$example$night_gap, y = s$example_night_pct / 100,
-      text = sprintf("%.0fth percentile", s$example_night_pct), showarrow = FALSE,
+      text = paste(ordinal(s$example_night_pct), "percentile"), showarrow = FALSE,
       xanchor = "left", yanchor = "bottom", xshift = 8, font = list(size = 11, color = clay))))
 
   # D3 chart 2: where in the day the two tracts actually differ.
@@ -174,7 +226,14 @@ tradeoff_widgets <- function(d) {
   hour[is.na(N), N := 0L]
   hour[, rate := 1000 * N / rows$population[match(GEOID, rows$GEOID)]]
   colors <- c("#50917D", clay)
+  wide <- dcast(hour, hour ~ GEOID, value.var = "rate")
+  upper <- pmax(wide[[2]], wide[[3]])
+  lower <- pmin(wide[[2]], wide[[3]])
   clock <- plotly::plot_ly()
+  clock <- plotly::add_trace(clock, x = c(wide$hour, rev(wide$hour)),
+    y = c(upper, rev(lower)), type = "scatter", mode = "lines", fill = "toself",
+    fillcolor = "rgba(179,95,73,0.16)", line = list(width = 0),
+    hoverinfo = "skip", showlegend = FALSE, name = "Differences")
   for (i in seq_len(nrow(rows))) {
     sub <- hour[GEOID == rows$GEOID[i]][order(hour)]
     clock <- plotly::add_lines(clock, x = sub$hour, y = sub$rate,

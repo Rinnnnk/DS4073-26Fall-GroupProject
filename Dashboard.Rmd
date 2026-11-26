@@ -371,7 +371,7 @@ charts[[4]][[1]]
 
 :::
 
-<p class="nyc-note">Lines mark medians across tracts with all profile fields available. Click a tract to locate it on the map.</p>
+<p class="nyc-note">Dashed lines mark the two medians and the dash-dot curve is a local fit through the same points. The fit is almost flat between $1,500 and $3,000, which is why rent alone predicts little about late-night reporting.</p>
 
 ```{r rent-sensitivity, results='asis'}
 s <- copy(nyc$tradeoff_check)
@@ -385,9 +385,9 @@ htmltools::tags$details(class = "nyc-audit", id = "rent-sensitivity",
 )
 ```
 
-### D1 · Locate the four groups
+### D1 · Where same-rent neighbours disagree
 
-<p>Compare the geography of the same rent and reporting groups.</p>
+<p>Shade each tract by the largest late-night gap it reaches against a tract in the same borough whose rent is within $100.</p>
 
 <div class="nyc-controls"><output id="d-selection" aria-live="polite">Select a tract to compare</output></div>
 
@@ -399,7 +399,7 @@ charts[[4]][[2]]
 
 :::
 
-<p class="nyc-note">Click a colored tract or select a dot in the scatterplot. Gray identifies tracts outside the analysis sample.</p>
+<p class="nyc-note">Dark tracts have at least one same-rent neighbour whose late-night rate is far higher or lower. Click a dot in the scatterplot to highlight that tract here; areas were assigned by grid centre. Gray marks tracts with no qualifying neighbour or outside the analysis sample, so the darkest tracts are exactly the places D2 and D3 describe.</p>
 
 Row
 ------------------------------------------
@@ -416,7 +416,7 @@ charts[[4]][[3]]
 
 :::
 
-<p class="nyc-note">`r show_n(dp$n_pairs)` pairs across `r show_n(dp$tracts)` tracts. Half of the pairs differ by at most `r sprintf("%.1f", dp$night_median)` late-night requests per 1,000 residents, but the worst tenth differ by `r sprintf("%.1f", dp$night_p90)` or more. Top-coded rents, where ACS reports only "$3,500 or more", are excluded because the true gap is unknown.</p>
+<p class="nyc-note">`r show_n(dp$n_pairs)` pairs across `r show_n(dp$tracts)` tracts. Half of the pairs differ by at most `r sprintf("%.1f", dp$night_median)` late-night requests per 1,000 residents, but the worst tenth differ by `r sprintf("%.1f", dp$night_p90)` or more. Measured against each indicator's own typical gap, the 90th percentile reaches `r sprintf("%.1f", dp$gap_reach[["night"]])`x for late-night requests, `r sprintf("%.1f", dp$gap_reach[["nypd"]])`x for NYPD reports and `r sprintf("%.1f", dp$gap_reach[["rail"]])`x for rail distance: the rail gap is the most uneven of the three. Top-coded rents, where ACS reports only "$3,500 or more", are excluded because the true gap is unknown.</p>
 
 ### D2 · Does the rent window change the answer?
 

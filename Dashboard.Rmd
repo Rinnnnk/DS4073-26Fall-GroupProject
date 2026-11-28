@@ -339,19 +339,13 @@ charts[[2]][[8]]
 <p><strong>Finding</strong> From August to September, daily reports rose citywide while the late-night share fell in `r b3$borough_shift[share_change < 0, .N]` of `r nrow(b3$borough_shift)` boroughs, with Brooklyn the exception.</p>
 </div>
 
-Safety & Rail {#safety data-orientation=rows}
+ZhangJingchen · 2430026269 {#safety data-orientation=rows}
 ==========================================
-
-<p class="nyc-note"><strong>Analyst: ZhangJingchen · Student ID: 2430026269</strong></p>
 
 Row
 ------------------------------------------
 
 ### C1 · Reported NYPD complaints
-
-<p>Where are reported complaint rates higher?</p>
-
-<p><strong>`r show_n(qa_nypd$unique_tract)` of `r show_n(qa_nypd$raw_rows)`</strong> 2024 reports matched one tract. Rates are mapped for <strong>`r show_n(nyc$tr[is.finite(nypd_rate), .N])`</strong> tracts.</p>
 
 ::: {.nyc-viz}
 
@@ -361,13 +355,7 @@ charts[[3]][[1]]
 
 :::
 
-<p class="nyc-note">Color bands make high-rate tracts easy to locate. The denominator is ACS resident population; rates are shown only for tracts with at least 500 residents. Reports reflect recorded incidents, not an individual risk estimate.</p>
-
-<p class="nyc-note"><strong>Readout:</strong> The median tract rate is 74.0 reports per 1,000 residents in the Bronx, compared with 36.2 on Staten Island. Borough medians summarize tracts equally; they are not borough-wide rates.</p>
-
 ### C1 · Offense-level mix
-
-<p>Compare the mix of reported offense levels by borough.</p>
 
 ::: {.nyc-viz}
 
@@ -377,14 +365,7 @@ charts[[3]][[2]]
 
 :::
 
-<p class="nyc-note">Each 100% stack compares the share of felony, misdemeanor and violation reports among geocoded records matched to that borough. Legend clicks isolate a category; hover shows counts. Source: <a href="https://data.cityofnewyork.us/d/qgea-i56i">NYPD historic complaint data</a>.</p>
-
-Row
-------------------------------------------
-
 ### C1 · Within-borough rate variation
-
-<p>How much do tract reporting rates vary inside each borough?</p>
 
 ::: {.nyc-viz}
 
@@ -394,16 +375,10 @@ charts[[3]][[3]]
 
 :::
 
-<p class="nyc-note">Each box shows the median and middle half of eligible tract rates; points mark outliers. The log1p vertical position keeps zero rates and high outliers visible, with tick labels in reports per 1,000 residents. Tracts have equal weight.</p>
-
-<p class="nyc-note"><strong>Readout:</strong> Manhattan's middle half spans 38.5–116.7 reports per 1,000, a wider range than Queens (29.0–60.4). Borough medians alone hide this spread.</p>
-
 Row
 ------------------------------------------
 
 ### C2 · Distance to rail complexes
-
-<p>Where are tracts farther from rail? This map includes <strong>`r show_n(nyc$tr[is.finite(station_m), .N])`</strong> tracts with a measured station distance.</p>
 
 ::: {.nyc-viz}
 
@@ -413,11 +388,7 @@ charts[[3]][[4]]
 
 :::
 
-<p class="nyc-note">Sequential color bands identify farther tracts; orange dots mark station complexes. Distances are straight lines from a representative point inside each tract to the nearest complex, not travel distance or travel time.</p>
-
 ### C2 · Coverage at any distance
-
-<p>Read off the share of tracts within a distance you choose.</p>
 
 ::: {.nyc-viz}
 
@@ -427,16 +398,7 @@ charts[[3]][[5]]
 
 :::
 
-<p class="nyc-note">The step curves show the share of each borough's tracts within any chosen distance. The dashed 0.8 km reference makes borough coverage comparable. The denominator is all tracts with a measured distance in that borough. Source: <a href="https://data.ny.gov/d/5f5g-n3cz">MTA station complexes</a>.</p>
-
-<p class="nyc-note"><strong>Readout:</strong> Within 0.8 km are 93.9% of Manhattan tracts, 77.6% in Brooklyn, 72.6% in the Bronx, 42.4% in Queens and 23.0% on Staten Island.</p>
-
-Row
-------------------------------------------
-
 ### C2 · Farthest populated tracts
-
-<p>Which populated tracts have the longest straight-line distance to a station?</p>
 
 ::: {.nyc-viz}
 
@@ -446,16 +408,10 @@ charts[[3]][[6]]
 
 :::
 
-<p class="nyc-note">The ten farthest tracts among those with at least 500 ACS residents are ranked by distance. Labels use borough abbreviations and tract codes; hover reveals the full tract label and closest station. This filter avoids letting nearly uninhabited tracts dominate the rental-oriented ranking.</p>
-
-<p class="nyc-note"><strong>Readout:</strong> The ten farthest populated tracts are all in Queens or Staten Island. The farthest, Staten Island tract 032300, is 8.45 km in a straight line from its nearest station complex.</p>
-
 Row
 ------------------------------------------
 
 ### C3 · Rail access and report rates
-
-<p>Do areas near rail show different reporting rates? Compare <strong>`r show_n(nyc$tr[is.finite(nypd_rate) & is.finite(station_m), .N])`</strong> tracts within boroughs.</p>
 
 ::: {.nyc-viz}
 
@@ -465,11 +421,7 @@ charts[[3]][[7]]
 
 :::
 
-<p class="nyc-note">Each point is one tract; borough colors support within-borough reading. The vertical axis is log1p transformed to show skewed rates while its tick labels remain reports per 1,000 residents. The pattern is descriptive and does not show whether rail access causes reporting differences.</p>
-
 ### C3 · Within-borough distance bands
-
-<p>Compare median reporting rates at similar rail distances.</p>
 
 ::: {.nyc-viz}
 
@@ -478,10 +430,6 @@ charts[[3]][[8]]
 ```
 
 :::
-
-<p class="nyc-note">Points show tract medians within fixed distance bands; whiskers span the middle 50% and hover gives the sample size. Bands with fewer than five tracts are omitted. Compare bands within each borough; visitor and worker flows can influence rates based on resident population.</p>
-
-<p class="nyc-note"><strong>Readout:</strong> The nearest band has a higher median report rate than the 1.6 km+ band in the Bronx (87.7 versus 38.9 per 1,000), Brooklyn (54.2 versus 42.3) and Queens (52.8 versus 37.1). Staten Island is not monotonic across the four bands. Manhattan has only one tract in its farthest band, so that comparison is suppressed.</p>
 
 Rent & Noise {#tradeoffs data-orientation=rows}
 ==========================================

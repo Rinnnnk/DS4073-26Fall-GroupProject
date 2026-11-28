@@ -1,29 +1,36 @@
 # Part C — three-minute speaking script
 
 **Presenter:** ZhangJingchen (2430026269)  
-**Slides:** Part C opener, C1, C2, C3  
-**Target:** about 3 minutes at a natural pace
+**Slides:** Part C opener, C1 map, C1 comparisons, C2 map, C2 comparisons, C3
+**Target:** about three minutes at a natural pace
 
-## Slide 1 — Safety and rail (0:00–0:25)
+## Slide 1 — Safety and rail (0:00–0:20)
 
-After housing and noise, I add two renter concerns: reported incidents and rail access. I join 2024 NYPD complaints, ACS population, census tract boundaries and MTA stations. This lets us compare measures on the same map. We have 2,325 tracts with rail distance and 2,211 with eligible complaint rates.
+After housing and noise, my section adds two renter concerns: reported incidents and rail access. I combine NYPD complaints, resident population, census tract boundaries and station locations. That gives us several views of the same neighborhoods, rather than one borough average.
 
-## Slide 2 — C1: NYPD reports (0:25–1:10)
+## Slide 2 — C1: report-rate map (0:20–0:45)
 
-First, where is the complaint rate higher? I calculate reports per 1,000 residents for tracts with at least 500 residents. The dashboard map locates high-rate tracts. Here, bars compare borough medians and 100% stacks compare offense levels. The Bronx median is about 74, versus 36 on Staten Island. But Manhattan's middle half runs from roughly 38 to 117, so the dashboard also has a boxplot. Position helps us compare rates, while stacked color shows composition. These are recorded complaints, not individual risk.
+First, where are reports concentrated? This map shades tracts by reports per thousand residents. Darker areas have higher recorded rates. The map reveals neighboring tracts with different rates that one borough average would hide. These are incident locations, not a personal safety score.
 
-## Slide 3 — C2: rail access (1:10–1:55)
+## Slide 3 — C1: offense mix and variation (0:45–1:15)
 
-Next, I measure straight-line distance from each tract to its nearest rail station complex, including Staten Island Railway. Within 0.8 kilometres are 94% of Manhattan tracts, but only 42% in Queens and 23% on Staten Island. The ranking identifies remote tracts; Staten Island tract 032300 is about 8.45 kilometres away. The dashboard map locates them, while cumulative curves allow any threshold. Distance is a useful proxy, though walking routes and train frequency need separate data.
+Left, stacked bars compare offense shares: misdemeanors are largest in each borough, but the other shares differ. Right, boxplots show how tract rates spread within boroughs. Manhattan's wide range means its median misses many places. Stacks show composition, boxplots show variation, and the log display keeps outliers visible.
 
-## Slide 4 — C3: within-borough comparison (1:55–3:00)
+## Slide 4 — C2: station-distance map (1:15–1:40)
 
-Finally, do tracts near rail have different complaint rates? Each dot on the left is one tract: rail distance runs across, report rate runs up. In the dashboard, I click a Bronx dot, and the chart on the right focuses on the Bronx. It still uses *all* eligible Bronx tracts, split into four distance bands, so one clicked dot does not determine the result. The nearest band has about 88 reports per 1,000 residents, versus 39 in the farthest band. Brooklyn and Queens show a similar direction; Staten Island changes little. Manhattan has only one tract in the farthest band, so that comparison is hidden. I can click another borough or show all five again. These are recorded reports, and the pattern is descriptive, not causal. Together, the location, offense mix, population and rail distance provide a fuller view of the same tracts. That leads to the next question: what differs when rent is similar?
+Next, I measure straight-line distance to the nearest rail station complex. Orange dots mark stations; darker tracts are farther away. The map shows close access around the central network and wider gaps toward outer areas. Distance is useful, though walking routes and train frequency need other data.
+
+## Slide 5 — C2: coverage and farthest tracts (1:40–2:10)
+
+Cumulative curves show the share of tracts within any station-distance threshold. Manhattan rises quickly; Queens and Staten Island rise slowly. The ranking names the farthest populated tracts, mostly in those outer boroughs. Together, the charts show overall coverage and the places that form the long tail.
+
+## Slide 6 — C3: reports and rail distance (2:10–3:00)
+
+Finally, I put distance and reporting together. Each left-hand dot is a tract. Clicking a Bronx dot in the dashboard focuses the right chart on that borough, while keeping all eligible Bronx tracts in the calculation. Its dots show band medians; the vertical lines show the middle half. Near-rail tracts have a higher median than the farthest band here, but the pattern differs elsewhere. This is descriptive: stations alone do not explain reporting. Visitors, street activity and reporting habits also matter. These eight charts build a fuller view of safety and access before the next section asks what changes at similar rents.
 
 ## Source and interpretation notes
 
-- NYPD historic complaint data: 2024 incident locations and offense levels.
-- ACS 2020–2024 five-year estimates: tract resident population.
-- MTA station complexes snapshot: closest rail station coordinates.
-- NYC 2020 census tract boundaries: geographic join and representative tract points.
-- Rates summarize recorded events per 1,000 *residents*; incident locations, visitors and daytime populations can affect them. Rail distance is straight line, not walking time.
+- NYPD historic complaints: incident locations and offense levels.
+- ACS resident population: denominator for tract report rates.
+- MTA station complexes and NYC census tracts: station locations and geographic comparison.
+- Rates measure recorded reports per thousand residents. Rail distance is straight line, not walking time. Associations are descriptive, not causal.

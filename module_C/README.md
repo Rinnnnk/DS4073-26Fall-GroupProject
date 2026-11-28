@@ -2,7 +2,7 @@
 
 三个任务的图表代码在 [visualizations.R](visualizations.R)，说明与布局在 [Dashboard.Rmd](../Dashboard.Rmd)。C1 和 C2 各有三张图：地图独占一行，其余两图并排一行；C3 两图并排，共五行八图。
 
-展示材料：[Part_C_Presentation.pptx](Part_C_Presentation.pptx)（四页，模板改编；C3 左侧散点图为高清图片以保证演示软件中不出现误连线，其余图表可编辑）和 [Part_C_Speech.md](Part_C_Speech.md)（约三分钟英文讲稿）。C3 图片由 [presentation_scatter.R](presentation_scatter.R) 从 `data/tracts.csv` 生成。Dashboard 的 C 页只保留图表标题与简短交互控件，详细解释和图表口径放在展示材料及本说明中。
+展示材料：[Part_C_Presentation.pptx](Part_C_Presentation.pptx)（六页，沿用提供的模板；封面之外完整展示 Dashboard 的八张图）和 [Part_C_Speech.md](Part_C_Speech.md)（约三分钟、少数字的英文讲稿）。PPT 使用 Dashboard 图表的高清截图，以保证不同演示软件中的显示一致；交互操作仍在 Dashboard HTML 中进行。[presentation_scatter.R](presentation_scatter.R) 可单独重绘 C3 的静态散点图。Dashboard 的 C 页只保留图表标题与简短交互控件，详细解释和图表口径放在展示材料及本说明中。
 
 - C1：普查区地图用顺序色阶定位每千人 NYPD 报案率；100% 堆叠柱图比较五区 felony、misdemeanor、violation 的构成；箱线图比较各区内部普查区报案率的中位数、四分位区间与离群点。事件时间是 2024 年，报案率只对 ACS 人口至少 500 的普查区计算。箱线图使用 log1p 位置，坐标刻度仍以每千人报案数标注。
 - C2：站距地图定位远离轨道交通的普查区，橙色点表示车站综合体；五条累计曲线比较各区在给定站距内的普查区占比；横向点图列出站距最远的十个有人居住普查区及最近车站。地图与曲线纳入所有有站距的普查区，排名图另要求 ACS 人口至少 500。距离是普查区内部代表点至最近车站的直线距离，不是步行时间。

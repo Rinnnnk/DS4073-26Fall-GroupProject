@@ -18,6 +18,7 @@ body { background: #edf3f0; color: var(--ink); font-family: 'Avenir Next', Arial
 .chart-stage p { font-size: 13px; color: var(--soft-ink); margin: 6px 0 11px; }
 .chart-stage p strong { color: var(--accent); }
 .nyc-viz > .html-widget { min-width: 0; height: 344px !important; }
+.nyc-viz.c-wide-map > .html-widget { height: 420px !important; }
 .nyc-viz .leaflet-container { background: #e9f1ef; }
 .nyc-viz .leaflet-control { color: var(--ink); }
 .nyc-viz .legend { font-size: 11px; }
@@ -49,6 +50,7 @@ body { background: #edf3f0; color: var(--ink); font-family: 'Avenir Next', Arial
 .nyc-key span { border-left: 10px solid var(--swatch); padding-left: 5px; }
 a { color: #196d6c; }
 @media (max-width: 767px) { .chart-wrapper .chart-stage { padding: 8px; } .nyc-viz > .html-widget { height: 310px !important; } }
+@media (max-width: 767px) { .nyc-viz.c-wide-map > .html-widget { height: 310px !important; } }
 
 .nyc-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 6px 0 10px; }
 .nyc-kpi { background: var(--paper); border: 1px solid var(--rule); border-left: 4px solid var(--accent); border-radius: 7px; padding: 9px 12px; }

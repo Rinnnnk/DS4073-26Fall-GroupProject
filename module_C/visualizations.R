@@ -4,7 +4,7 @@ safety_widgets <- function(d) {
   t <- copy(d$tr[is.finite(nypd_rate) & is.finite(station_m)])
   rail_tracts <- d$tr[is.finite(station_m)]
   nypd <- geo_map(d, "c-report-map", setNames(t$nypd_rate, t$GEOID), "Reports / 1,000",
-    setNames(sprintf("%s · %.1f per 1,000 (%s reports)", t$label, t$nypd_rate, show_n(t$nypd_count)), t$GEOID),
+    setNames(sprintf("%s | %.1f per 1,000 (%s reports)", t$label, t$nypd_rate, show_n(t$nypd_count)), t$GEOID),
     c(0, 25, 50, 100, 200, Inf))
   law <- copy(d$law)
   law[, share := N/sum(N), by = borough]
@@ -15,7 +15,7 @@ safety_widgets <- function(d) {
     if (!length(na.omit(sub$share))) next
     severity <- plotly::add_bars(severity, x = sub$borough, y = sub$share, name = category,
       marker = list(color = classes[[category]]), customdata = show_n(sub$N),
-      hovertemplate = "%{x}<br>%{y:.1%} · %{customdata} reports<extra>%{fullData.name}</extra>")
+      hovertemplate = "%{x}<br>%{y:.1%} | %{customdata} reports<extra>%{fullData.name}</extra>")
   }
   severity <- finish(severity, "c-report-mix", "", "Share of matched NYPD reports", TRUE,
                      bottom = 78, barmode = "stack", y_options = list(tickformat = ".0%"))
@@ -37,7 +37,7 @@ safety_widgets <- function(d) {
                                   tickangle = -35),
     y_options = list(tickvals = log1p(rate_ticks), ticktext = rate_ticks))
   rail <- geo_map(d, "c-station-map", setNames(rail_tracts$station_m, rail_tracts$GEOID), "Distance (m)",
-    setNames(paste0(rail_tracts$label, " · ", show_n(rail_tracts$station_m),
+    setNames(paste0(rail_tracts$label, " | ", show_n(rail_tracts$station_m),
                     " m<br>", rail_tracts$station_name), rail_tracts$GEOID),
     c(0, 400, 800, 1200, 2000, Inf), stations = TRUE)
   cdf <- plotly::plot_ly()
@@ -45,7 +45,7 @@ safety_widgets <- function(d) {
     x <- sort(rail_tracts[borough == b, station_m]) / 1000
     cdf <- plotly::add_lines(cdf, x = c(0, x), y = (0:length(x))/length(x), name = b,
       line = list(color = boro_colors[[b]], width = 2.1, shape = "hv"),
-      hovertemplate = "%{x:.2f} km · %{y:.1%}<extra>%{fullData.name}</extra>")
+      hovertemplate = "%{x:.2f} km | %{y:.1%}<extra>%{fullData.name}</extra>")
   }
   cdf <- finish(cdf, "c-station-cdf", "Distance to nearest complex (km)", "Cumulative share of tracts",
     TRUE, bottom = 79, y_options = list(tickformat = ".0%", range = c(0, 1)),
@@ -58,7 +58,7 @@ safety_widgets <- function(d) {
   far <- head(far, 10L)
   boro_short <- c(Bronx = "BX", Brooklyn = "BK", Manhattan = "MN",
                   Queens = "QN", `Staten Island` = "SI")
-  far[, chart_label := paste0(boro_short[borough], " · ", tract)]
+  far[, chart_label := paste0(boro_short[borough], " ", tract)]
   far <- far[order(station_m)]
   far_rank <- plotly::plot_ly()
   far_rank <- plotly::add_markers(far_rank, x = far$station_m / 1000,
@@ -75,7 +75,7 @@ safety_widgets <- function(d) {
   association <- finish(association, "c-rail-report", "Distance to nearest complex (km)",
     "Reports / 1,000 (log scale)", TRUE, bottom = 80,
     y_options = list(tickvals = log1p(rate_ticks), ticktext = rate_ticks))
-  ranges <- c("0–399 m", "400–799 m", "800–1,599 m", "1,600 m+")
+  ranges <- c("0-399 m", "400-799 m", "800-1,599 m", "1,600 m+")
   t[, distance_band := cut(station_m, c(0, 400, 800, 1600, Inf), labels = ranges, right = FALSE)]
   binned <- t[, .(mid = median(nypd_rate), q1 = as.numeric(quantile(nypd_rate, .25)),
                   q3 = as.numeric(quantile(nypd_rate, .75)), n = .N),
@@ -89,7 +89,7 @@ safety_widgets <- function(d) {
                      arrayminus = cell$mid - cell$q1, color = boro_colors[[b]], thickness = 1),
       customdata = cbind(cell$n, round(cell$q1, 1), round(cell$q3, 1)),
       hovertemplate = paste0("%{x}<br>Median %{y:.1f} per 1,000",
-                             "<br>Middle 50%: %{customdata[1]:.1f}–%{customdata[2]:.1f}",
+                             "<br>Middle 50%: %{customdata[1]:.1f}-%{customdata[2]:.1f}",
                              "<br>%{customdata[0]} tracts<extra>%{fullData.name}</extra>"))
   }
   groups <- finish(groups, "c-rail-bands", "Distance band", "Median reports per 1,000",

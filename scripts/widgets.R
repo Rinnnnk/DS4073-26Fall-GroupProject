@@ -69,7 +69,7 @@ geo_map <- function(d, id, value, title, labels, bins = NULL, groups = NULL, sta
     if (type != "bin") return(leaflet::labelFormat()(type, cuts, ...))
     low <- show_n(head(cuts, -1L))
     high <- tail(cuts, -1L)
-    ifelse(is.infinite(high), paste0(low, "+"), paste(low, show_n(high), sep = "–"))
+      ifelse(is.infinite(high), paste0(low, "+"), paste(low, show_n(high), sep = "-"))
   }
   map <- leaflet::addLegend(map, pal = palette, values = values, title = title, position = "bottomright",
                             opacity = .92, na.label = "Missing / excluded", labFormat = bin_labels)

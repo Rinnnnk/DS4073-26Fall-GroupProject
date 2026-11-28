@@ -347,13 +347,16 @@ Row
 
 ### C1 · Reported NYPD complaints
 
-::: {.nyc-viz}
+::: {.nyc-viz .c-wide-map}
 
 ```{r chart-3-1}
 charts[[3]][[1]]
 ```
 
 :::
+
+Row
+------------------------------------------
 
 ### C1 · Offense-level mix
 
@@ -380,13 +383,16 @@ Row
 
 ### C2 · Distance to rail complexes
 
-::: {.nyc-viz}
+::: {.nyc-viz .c-wide-map}
 
 ```{r chart-3-4}
 charts[[3]][[4]]
 ```
 
 :::
+
+Row
+------------------------------------------
 
 ### C2 · Coverage at any distance
 

@@ -1,6 +1,6 @@
 # C · 报案与轨道交通
 
-三个任务的图表代码在 [visualizations.R](visualizations.R)，说明与布局在 [Dashboard.Rmd](../Dashboard.Rmd)。C1 和 C2 各有三张图，C3 有两张图，共三行八图。
+三个任务的图表代码在 [visualizations.R](visualizations.R)，说明与布局在 [Dashboard.Rmd](../Dashboard.Rmd)。C1 和 C2 各有三张图：地图独占一行，其余两图并排一行；C3 两图并排，共五行八图。
 
 展示材料：[Part_C_Presentation.pptx](Part_C_Presentation.pptx)（四页，模板改编，图表可编辑）和 [Part_C_Speech.md](Part_C_Speech.md)（约三分钟英文讲稿）。Dashboard 的 C 页只保留图表标题与简短交互控件，详细解释和图表口径放在展示材料及本说明中。
 

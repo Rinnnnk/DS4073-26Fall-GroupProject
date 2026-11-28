@@ -22,7 +22,7 @@ DS4073 Group 6 的协作起点。研究问题是，在纽约市同一个行政�
 
 各模块的 `visualizations.R` 由 `Dashboard.Rmd` 加载。改自己模块的图时，从该目录的 R 文件入手。修改标题、图注和布局时编辑 `Dashboard.Rmd` 对应页面。共享分析在 `scripts/analysis.R`，通用图表函数在 `scripts/widgets.R`，页面联动在 `scripts/dashboard.js`。修改后从仓库根目录重新渲染并检查。
 
-C 部分包含八张 Dashboard 图的六页英文展示与三分钟讲稿，见 [module_C](module_C/README.md)。
+C 部分的八张 Dashboard 图及分析口径见 [module_C](module_C/README.md)。
 
 ## 用 R 重新生成 Dashboard
 

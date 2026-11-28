@@ -46,17 +46,13 @@ quad_n <- nyc$profile[quad == quad_labels[4], .N]
 boro_rent <- nyc$tr[!is.na(rent), .(median_rent = median(as.numeric(rent))), by = borough][order(-median_rent)]
 ```
 
-Housing {#housing data-orientation=rows}
+WangTaohan · 2430026200 {#housing data-orientation=rows}
 ==========================================
 
 Row
 ------------------------------------------
 
-### A1 · Where rents are higher
-
-<p class="a-author">Presenter · `r htmltools::htmlEscape(housing_author)`</p>
-
-`r show_n(nrow(housing$rent))` of `r show_n(nrow(nyc$tr))` NYC census tracts have a published ACS rent estimate. Across those tracts, the median is **`r show_dollar(median(housing$rent$rent))` per month**.
+### A1 · Median gross rent by tract
 
 ::: {.nyc-viz}
 
@@ -66,11 +62,7 @@ housing_charts$rent_map
 
 :::
 
-<p class="nyc-note">The median of tract rent estimates is <strong>`r show_dollar(housing$borough_rents[borough == "Manhattan", median_rent])` in Manhattan</strong> and <strong>`r show_dollar(housing$borough_rents[borough == "Bronx", median_rent])` in the Bronx</strong>. Color intensity shows fixed monthly rent bands. Hover for tract estimates. Grey indicates missing rent.</p>
-
-### A1 · How rent varies with household income
-
-Among `r show_n(housing$income_exact_n)` tracts with both figures below their upper categories, the citywide Spearman correlation is **`r sprintf("%.2f", housing$income_rho)`**. It ranges from `r sprintf("%.2f", min(housing$income_stats$rho))` in `r housing$income_stats[which.min(rho), borough]` to `r sprintf("%.2f", max(housing$income_stats$rho))` in `r housing$income_stats[which.max(rho), borough]`.
+### A1 · Rent and household income
 
 ::: {.nyc-viz}
 
@@ -80,14 +72,15 @@ housing_charts$income_rent
 
 :::
 
-<p class="nyc-note">One point per tract. Borough color is categorical. Open diamonds flag an ACS upper category for either estimate. Click the legend to focus on a borough. Median household income covers all households in the tract.</p>
+<div class="nyc-controls">
+  <button type="button" id="a-clear-tract" disabled>Clear selection</button>
+  <output id="a-tract-selected" aria-live="polite"></output>
+</div>
 
 Row
 ------------------------------------------
 
-### A2 · Budget coverage across thresholds
-
-At **$1,750**, Brooklyn covers `r show_pct(housing$coverage[budget == 1750 & borough == "Brooklyn", share])` of eligible tracts and Queens covers `r show_pct(housing$coverage[budget == 1750 & borough == "Queens", share])`. At **$2,250**, their shares are `r show_pct(housing$coverage[budget == 2250 & borough == "Brooklyn", share])` and `r show_pct(housing$coverage[budget == 2250 & borough == "Queens", share])`.
+### A2 · Budget coverage by borough
 
 ::: {.nyc-viz}
 
@@ -97,33 +90,27 @@ housing_charts$coverage
 
 :::
 
-<p class="nyc-note">The steps rise at the exact published rent estimates. The dotted line follows the selected budget. Denominators include all tracts with a published rent in each borough. The $3,500+ category stays above every available budget.</p>
-
-### A2 · Five boroughs at the same budget
+### A2 · Coverage at three budgets
 
 <div class="a-budget-control">
   <label for="a-budget">Monthly rent ceiling <output id="a-budget-value" for="a-budget">$2,000</output></label>
   <input id="a-budget" type="range" min="1000" max="3450" step="50" value="2000" />
   <div class="nyc-controls" id="a-budget-presets"><button type="button" value="1750">$1,750</button><button type="button" value="2000">$2,000</button><button type="button" value="2250">$2,250</button></div>
-  <p id="a-budget-status" role="status">`r show_n(housing$coverage[budget == 2000, sum(count)])` eligible tracts citywide within budget</p>
+  <div id="a-budget-status" class="sr-only" role="status">`r show_n(housing$coverage[budget == 2000, sum(count)])` eligible tracts citywide within budget</div>
 </div>
 
 ::: {.nyc-viz}
 
-```{r a-budget-bars}
-housing_charts$budget_bar
+```{r a-budget-matrix}
+housing_charts$budget_matrix
 ```
 
 :::
-
-<p class="nyc-note">Each tract receives equal weight. Coverage describes the share of tract medians at or below the ceiling. Use it to screen areas by historical rents. Current listings and rental-unit inventories require separate data.</p>
 
 Row
 ------------------------------------------
 
 ### A3 · Rent and rent burden
-
-Among **`r show_n(nrow(housing$burden))` tracts**, `r show_n(housing$burden[contrast == housing$sides[1], .N])` are in the lower-rent, higher-burden corner and `r show_n(housing$burden[contrast == housing$sides[2], .N])` are in the opposite corner.
 
 ::: {.nyc-viz}
 
@@ -133,64 +120,25 @@ housing_charts$burden_scatter
 
 :::
 
-<p class="nyc-note">The shaded corners combine the bottom and top quarters of the two citywide rank scales. Axes show the original values. Ringed points mark the Manhattan cases below. Rent burden is the share of renter households spending at least 30% of income on gross rent among those with a computable ratio.</p>
-
-### A3 · Largest gaps between the two ranks
-
-The gap is burden percentile less rent percentile. The bars show the four strongest exact-rent examples from each opposite corner.
+### A3 · Where rent and burden diverge
 
 ::: {.nyc-viz}
 
-```{r a-rank-gaps}
-housing_charts$rank_gap
+```{r a-burden-map}
+housing_charts$burden_map
 ```
 
 :::
 
-<p class="nyc-note">Positive values mean burden ranks higher. Both ranks use the same eligible tracts and average ties. Spearman’s rho is `r sprintf("%.2f", housing$burden_rho)` for the full sample and `r sprintf("%.2f", housing$burden_rho_exact)` after excluding $3,500+ rents.</p>
+### A3 · Burden in two Manhattan tracts
 
-Row
-------------------------------------------
-
-### A3 · Two Manhattan tracts
-
-::: {.a-case-layout}
-
-::: {.nyc-viz .a-case-viz}
+::: {.nyc-viz}
 
 ```{r a-case-composition}
 housing_charts$case_composition
 ```
 
 :::
-
-::: {.a-case-copy}
-
-**East Harlem (North), tract 021000**
-`r show_rent(housing$cases$rent[1])` median monthly rent and **`r show_pct(housing$cases$burden_rate[1])`** rent burden among `r show_n(housing$cases$computable[1])` computable renter households.
-
-**East Village, tract 002202**
-`r show_rent(housing$cases$rent[2])` median monthly rent and **`r show_pct(housing$cases$burden_rate[2])`** rent burden among `r show_n(housing$cases$computable[2])` computable renter households.
-
-The share spending 50% or more of income on rent was `r show_pct(housing$case_bands$severe[1] / housing$case_bands$computable[1])` in the East Harlem tract and `r show_pct(housing$case_bands$severe[2] / housing$case_bands$computable[2])` in the East Village tract.
-
-:::
-
-:::
-
-<details class="nyc-audit">
-  <summary>Data and methods</summary>
-  <p>The group joined ACS 2020–2024 five-year estimates to 2020 NYC census tract boundaries by GEOID after treating negative Census special codes as missing. A1 has `r show_n(nrow(housing$rent))` tracts with rent and `r show_n(nrow(housing$income))` with both rent and income. Its correlations exclude estimates in either ACS upper category. A2 uses all tracts with rent, including top-coded estimates in the denominator. A3 requires a rent estimate, a valid burden rate and at least 50 renter households with a computable ratio.</p>
-  <p>Estimates describe tracts and renter households during the ACS period. Tract estimates have sampling uncertainty. The two Manhattan cases illustrate the opposite combinations and have at least 500 computable renter households each.</p>
-</details>
-
-<p class="nyc-note"><a href="https://www.census.gov/programs-surveys/acs/data/summary-file.2024.html">U.S. Census ACS 2020–2024</a> · <a href="https://api.census.gov/data/2024/acs/acs5/groups/B25064.html">Gross rent</a> · <a href="https://api.census.gov/data/2024/acs/acs5/groups/B25070.html">Rent-to-income bands</a>.</p>
-
-Noise {#noise data-orientation=rows}
-==========================================
-
-Row
-------------------------------------------
 
 ### B1 · Noise request mix
 

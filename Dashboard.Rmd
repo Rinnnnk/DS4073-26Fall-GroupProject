@@ -413,6 +413,8 @@ Row
 
 ### C3 · Rail access and report rates
 
+<div class="nyc-controls"><output id="c3-selection" aria-live="polite">All boroughs | click a point or legend</output><button id="c3-reset" type="button">Show all</button></div>
+
 ::: {.nyc-viz}
 
 ```{r chart-3-7}

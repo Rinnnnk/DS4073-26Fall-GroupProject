@@ -82,6 +82,30 @@ window.HTMLWidgets.addPostRenderHandler(function () {
     });
   }
 
+  // C3: selecting a tract (or its legend) focuses the companion band chart
+  // on that borough. The rate summaries remain the full borough-band sample.
+  const c3Scatter = byId('c-rail-report');
+  const c3Bands = byId('c-rail-bands');
+  const c3Status = byId('c3-selection');
+  const c3Reset = byId('c3-reset');
+  if (c3Scatter && c3Bands && c3Status && c3Reset) {
+    const scatterNames = c3Scatter.data.map(trace => trace.name);
+    const bandNames = c3Bands.data.map(trace => trace.name);
+    function showC3Borough(borough) {
+      Plotly.restyle(c3Scatter, { opacity: scatterNames.map(name => !borough || name === borough ? 1 : .12) });
+      Plotly.restyle(c3Bands, { visible: bandNames.map(name => !borough || name === borough) })
+        .then(() => Plotly.relayout(c3Bands, { 'yaxis.autorange': true }));
+      const n = borough ? c3Scatter.data.find(trace => trace.name === borough)?.customdata?.length : 0;
+      c3Status.textContent = borough ? `${borough} | ${n.toLocaleString('en-US')} tracts` : 'All boroughs | click a point or legend';
+    }
+    c3Scatter.on('plotly_click', ({ points }) => showC3Borough(points[0]?.data?.name));
+    c3Scatter.on('plotly_legendclick', event => {
+      showC3Borough(event.data[event.curveNumber]?.name);
+      return false;
+    });
+    c3Reset.addEventListener('click', () => showC3Borough(null));
+  }
+
   const dimensions = ['cost', 'quiet', 'reports', 'rail'];
   const preferences = {
     equal: [25, 25, 25, 25],
